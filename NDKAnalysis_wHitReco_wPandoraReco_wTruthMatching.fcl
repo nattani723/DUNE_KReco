@@ -1,0 +1,102 @@
+#include "calorimetry_dune10kt.fcl"
+#include "services_dune.fcl"
+#include "standard_reco_dune10kt.fcl"
+
+
+process_name: HitSplitAlg
+
+services:
+{
+  TFileService: { fileName: "hitsplitalg_test.root" }
+  TimeTracker:       {}
+  RandomNumberGenerator: {}
+  message: @local::standard_info
+  FileCatalogMetadata:  @local::art_file_catalog_mc
+                        @table::dunefd_simulation_services
+   @table::dunefd_reco_services
+
+  BackTrackerService: {
+    BackTracker: {
+      SimChannelModuleLabel: "elecDrift"
+      G4ModuleLabel: "largeant"
+      MinimumHitEnergyFraction: 1e-1
+    }
+  }
+}
+services.Geometry: @local::dune10kt_1x2x6_geo
+
+source:
+{
+  module_type: RootInput
+  firstEvent : 1
+  maxEvents: 10
+}
+
+physics:
+{
+  producers: @local::physics.producers
+ 
+  analyzers:
+  {
+    HitSplitAlg:
+    {
+      module_type:      	"HitSplitAlg"
+      SaveHits:			false
+      MCgenieLabel:		"generator"
+#      HitModuleLabel:	 	"gaushit"
+      HitModuleLabel:	 	"hitfd"
+      HitTrackAssns:	 	"pandoraTrack"
+#      HitTrackAssns:	 	"pmtrack"
+      TrackModuleLabel: 	"pandoraTrack"
+#      TrackModuleLabel: 	"pmtracktc"
+#       TracksToSpacePoints:	"pmtrack"
+      PidModuleLabel: 	        "pandorapid"
+      CaloModuleLabel: 	        "pandoracalo"
+      OpFlashModuleLabel:	"opflash"
+      ShowerModuleLabel:        "pandoraShower"
+      NNetModuleLabel:          "emtrkmichelid:emtrkmichel"
+      SpacePointproducer:	"pandora"	
+#      SpacePointproducer:	"pmtrack"	
+#      SpacePointproducer:	"hitfd"	
+#      SpacePointproducer:	"spacepts"	
+      ExponentConstant:         0.42
+      MaxPIDAValue:		50.0
+      MinPIDAValue:		1.0
+      PidValue:		        0.1
+      CalorimetryAlg:           @local::dune10kt_calorimetryalgmc
+      View:			0
+      PointIDModuleLabel:       "decayid"
+      PIDA_endPoint:		30.0
+      FidVolCutX:		10.0
+      FidVolCutY:		10.0
+      FidVolCutZ:		10.0
+
+    }
+  }
+   analysis: [ HitSplitAlg ] //Directory for histograms
+
+   reco: [
+      rns,
+      caldata,
+      gaushit,
+      hitfd,
+      #linecluster,
+      ##pandora,
+      pandoraTrack, pandoraShower,
+      pandoracalo, pandorapid
+   ]
+
+   #define the output stream, there could be more than one if using filters
+   stream1:  [ out1 ]
+
+   #trigger_paths: [ reco ]
+
+   end_paths: [ analysis ]
+}
+
+#outputs:{}
+physics.producers.gaushit.CalDataModuleLabel: "caldata"
+#physics.producers.pandora.HitFinderModuleLabel:             "hitpdune"
+#physics.producers.pandora.GeantModuleLabel:                 "tpcrawdecoder:simpleSC"
+services.BackTrackerService.BackTracker.SimChannelModuleLabel: "elecDrift"
+#physics.producers.gaushit.InputModule: "tpcrawdecoder:caldata"

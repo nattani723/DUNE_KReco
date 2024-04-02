@@ -1,0 +1,205 @@
+#include "CCKaonAnalyzerRebuild_module.h"
+
+//#include "ubana/SinglePhotonAnalysis/SinglePhoton_module.h"                                                                                                                                                                                                                                                                 
+#include "headers/analyze_Slice.h"
+#include "headers/analyze_Tracks.h"
+#include "headers/analyze_Showers.h"
+#include "headers/analyze_MCTruth.h"
+#include "headers/analyze_OpFlashes.h"
+
+//#include "headers/particle_split_basetool_14Aug.h"                                                                                                                                                                                                                                                                          
+#include "headers/particle_split_basetool.h"
+#include "headers/track_production.h"
+
+
+//#include "gallery/Event.h"                                                                                                                                                                                                                                                                                                  
+//#include "gallery/ValidHandle.h"                                                                                                                                                                                                                                                                                            
+//#include "headers/analyze_Template.h"                                                                                                                                                                                                                                                                                       
+//#include "headers/second_shower_search.h"                                                                                                                                                                                                                                                                                   
+//#include "headers/analyze_EventWeight.h"                                                                                                                                                                                                                                                                                    
+
+/*                                                                                                                                                                                                                                                                                                                            
+//#include "ubana/SinglePhotonAnalysis/fiducial_volume.h"                                                                                                                                                                                                                                                                     
+ //#include "ubana/SinglePhotonAnalysis/isolation.h"                                                                                                                                                                                                                                                                           
+*/
+
+#include "art/Framework/Core/EDAnalyzer.h"
+#include "art/Framework/Core/ModuleMacros.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/SubRun.h"
+#include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Services/Optional/TFileService.h"
+
+#include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "canvas/Persistency/Common/TriggerResults.h"
+
+#include "fhiclcpp/ParameterSet.h"
+#include "fhiclcpp/ParameterSetRegistry.h"
+
+#include "lardata/Utilities/AssociationUtil.h"
+
+#include "larsim/EventWeight/Base/MCEventWeight.h"
+
+#include "larcore/Geometry/Geometry.h"
+
+#include "nusimdata/SimulationBase/MCTruth.h"
+#include "nusimdata/SimulationBase/MCParticle.h"
+
+#include "larcoreobj/SummaryData/POTSummary.h"
+
+#include "lardataobj/RecoBase/Hit.h"
+#include "lardataobj/RecoBase/Track.h"
+#include "lardataobj/RecoBase/Shower.h"
+#include "lardataobj/RecoBase/Vertex.h"
+#include "lardataobj/RecoBase/PFParticle.h"
+#include "lardataobj/AnalysisBase/Calorimetry.h"
+#include "lardataobj/AnalysisBase/ParticleID.h"
+#include "lardataobj/AnalysisBase/BackTrackerMatchingData.h"
+
+#include "ubana/ParticleID/Algorithms/uB_PlaneIDBitsetHelperFunctions.h"
+
+#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+
+#include "PID/LLR_PID.h"
+#include "PID/LLRPID_proton_muon_lookup.h"
+
+#include "PID_K/LLR_PID_K.h"
+#include "PID_K/LLRPID_kaon_proton_lookup.h"
+
+//#include "larreco/RecoAlg/TrackMomentumCalculator.h"                                                                                                                                                                                                                                                                        
+#include "larreco/RecoAlg/TrajectoryMCSFitter.h"
+#include "ubana/ParticleID/Algorithms/uB_PlaneIDBitsetHelperFunctions.h"
+#include "larreco/RecoAlg/TrackMomentumCalculator.h"
+
+#include "TTree.h"
+#include "TMath.h"
+
+#include <array>
+#include <vector>
+#include <map>
+//#include "LinkDef.h"                                                                                                                                                                                                                                                                                                        
+
+
+#include "art/Framework/Core/ModuleMacros.h"
+#include "art/Framework/Core/EDAnalyzer.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Run.h"
+#include "art/Framework/Principal/SubRun.h"
+#include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Principal/View.h"
+#include "canvas/Persistency/Common/Ptr.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Services/Optional/TFileService.h"
+#include "art/Framework/Services/Optional/TFileDirectory.h"
+#include "canvas/Persistency/Common/FindMany.h"
+#include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Utilities/InputTag.h"
+#include "fhiclcpp/ParameterSet.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "art/Utilities/make_tool.h"
+
+
+#include "larcore/Geometry/Geometry.h"
+#include "nusimdata/SimulationBase/MCTruth.h"
+#include "lardataobj/MCBase/MCShower.h"
+#include "lardataobj/MCBase/MCTrack.h"
+#include "lardataobj/MCBase/MCStep.h"
+#include "nusimdata/SimulationBase/MCFlux.h"
+#include "lardataobj/Simulation/SimChannel.h"
+#include "lardataobj/Simulation/AuxDetSimChannel.h"
+#include "lardataobj/AnalysisBase/Calorimetry.h"
+#include "lardataobj/AnalysisBase/ParticleID.h"
+#include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RawData/raw.h"
+#include "lardataobj/RawData/BeamInfo.h"
+#include "lardataobj/RawData/TriggerData.h"
+#include "lardata/Utilities/AssociationUtil.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "larcoreobj/SummaryData/POTSummary.h"
+
+#include "lardataobj/AnalysisBase/BackTrackerMatchingData.h"
+#include "nusimdata/SimulationBase/MCParticle.h"
+
+#include "lardataobj/RecoBase/Track.h"
+#include "lardataobj/RecoBase/Shower.h"
+#include "lardataobj/RecoBase/Cluster.h"
+#include "lardataobj/RecoBase/Hit.h"
+#include "lardataobj/RecoBase/EndPoint2D.h"
+#include "lardataobj/RecoBase/Vertex.h"
+#include "lardataobj/RecoBase/OpFlash.h"
+#include "lardataobj/RecoBase/PFParticle.h"
+#include "lardataobj/RecoBase/Wire.h"
+#include "lardataobj/RecoBase/MCSFitResult.h"
+#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
+#include "larreco/Deprecated/BezierTrack.h"
+#include "larreco/RecoAlg/TrackMomentumCalculator.h"
+#include "larsim/EventWeight/Base/MCEventWeight.h"
+#include "ubobj/Trigger/ubdaqSoftwareTriggerData.h"
+#include "lardataobj/AnalysisBase/CosmicTag.h"
+#include "lardataobj/AnalysisBase/FlashMatch.h"
+#include "lardataobj/AnalysisBase/T0.h"
+#include "ubobj/Optical/UbooneOpticalFilter.h"
+#include "ubana/AnalysisTree/MCTruth/IMCTruthMatching.h"
+
+#include "lardataobj/RecoBase/PFParticleMetadata.h"
+
+
+#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+#include "larevt/SpaceChargeServices/SpaceChargeService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+
+#include "ubana/ParticleID/Algorithms/uB_PlaneIDBitsetHelperFunctions.h"
+
+#include "canvas/Persistency/Common/TriggerResults.h"
+#include "fhiclcpp/ParameterSetRegistry.h"
+
+#include <cstddef> // std::ptrdiff_t                                                                                                                                                                                                                                                                                          
+#include <cstring> // std::memcpy()                                                                                                                                                                                                                                                                                           
+#include <vector>
+#include <map>
+#include <iterator> // std::begin(), std::end()                                                                                                                                                                                                                                                                               
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+#include <functional> // std::mem_fun_ref                                                                                                                                                                                                                                                                                     
+#include <typeinfo>
+#include <memory> // std::unique_ptr<>                                                                                                                                                                                                                                                                                        
+
+#include "TTree.h"
+#include "TTimeStamp.h"
+
+//#include "ubana/SinglePhotonAnalysis/SinglePhoton_module.h"                                                                                                                                                                                                                                                                 
+
+//#ifdef __MAKECINT__                                                                                                                                                                                                                                                                                                         
+#ifdef __CLING__
+#pragma link C++ class std::vector < std::vector<Float_t> >+;
+#pragma link C++ class std::vector < std::vector< std::vector<Float_t> > >+;
+#endif
+
+//const int kMaxTracks=20;                                                                                                                                                                                                                                                                                                    
+
+using namespace std;
+namespace Kaon_Analyzer{
+
+// ======================== Local Function Definition to get the reco origin ======================                                                                                                                                                                                                                           
+  art::Ptr<simb::MCTruth>TrackIDToMCTruth(art::Event const & evt, std::string _geant_producer, int geant_track_id)
+  {
+    lar_pandora::MCTruthToMCParticles truthToParticles;
+    lar_pandora::MCParticlesToMCTruth particlesToTruth;
+
+    lar_pandora::LArPandoraHelper::CollectMCParticles(evt, _geant_producer, truthToParticles, particlesToTruth);
+
+    for (auto iter : particlesToTruth) {
+      if (iter.first->TrackId() == geant_track_id) {
+	return iter.second;
+      }
+    }
+
+    art::Ptr<simb::MCTruth> null_ptr;
+    return null_ptr;
+  }
