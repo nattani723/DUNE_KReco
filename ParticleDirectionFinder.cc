@@ -7,51 +7,55 @@ namespace kaon_reconstruction
 
   ParticleDirectionFinder::ParticleDirectionFinder() :
 
-    m_ThetaBinSize(0.06),
-    m_PhiBinSize(0.06),
-    m_SmoothingWindow(3)
+    m_peak_searh_region(15.),
+    m_theta_bin_size(0.06),
+    m_phi_bin_size(0.06),
+    m_smoothing_window(3)
   {
   }
 
   //-----------------------------------------------------------------------------
 
-  void CollectSPsInROI(const SPList& SPList, const TVector3 KEnd, SPList& SPListROI) const
+  void collect_sp_in_roi(const SPList& sp_list, const TVector3 k_end, SPList& sp_list_roi) const
   {
 
-    const TVector3 Xaxis(1.,0.,0.);
+    for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp){
 
-    for(auto itSP = SPList.begin(); itSP != SPList.end(); ++spIter){
-      
+      const TVector3 hit_position = (*it_sp)->XYZ();
+      const TVector3 displacement_vector = hit_position - k_end;
+
+      if( displacement_vector.Mag() > m_peak_searh_region) continue;
+
+      sp_list_roi.push_back(*it_sp);
+
     }
+    
+  }
 
-    for (auto spIter = sp_from_recoobj.begin(); spIter != sp_from_recoobj.end(); ++spIter) {
+  //-----------------------------------------------------------------------------
 
-      const TVector3 hit_position = (*spIter)->XYZ();
-      //cout << hit_position.X() << endl;
-      const TVector3 distance_vector = hit_position - Kend_candidate;
+  void fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistributionMap3D& angular_distribution_map) const
+  {
 
-      if(distance_vector.Mag() > region_of_interest) continue;
+    const TVector3 x_axis(1.,0.,0.);
+
+    for(auto it_sp = sp_list_roi.begin(); it_sp != sp_list_roi.end(); ++it_sp){
+
+      const TVector3 hit_position = (*it_sp)->XYZ();
+      const TVector3 displacement_vector = hit_position - k_end;
 
       double theta = distance_vector.Theta();
-      double sintheta = TMath::Sin(theta);
       double phi = distance_vector.Phi();
+      int theta_factor = (int)(std::floor(theta / m_theta_nin_size));
+      int phi_factor = (int)(std::floor(phi / m_phi_bin_size));
 
-      int theta_factor = (int)(std::floor(theta / thetaBinSize));
-      int phi_factor = (int)(std::floor(phi / phiBinSize));
-
-      if( angular_distribution_map_3D.find(theta_factor) == angular_distribution_map_3D.end() &&
-	  angular_distribution_map_3D[theta_factor].find(phi_factor) == angular_distribution_map_3D[theta_factor].end() )
-	angular_distribution_map_3D[theta_factor][phi_factor] = sintheta; 
-      else angular_distribution_map_3D[theta_factor][phi_factor] += sintheta;
+      if( angular_distribution_map.find(theta_factor) == angular_distribution_map.end() &&
+	  angular_distribution_map[theta_factor].find(phi_factor) == angular_distribution_map[theta_factor].end() )
+	angular_distribution_map[theta_factor][phi_factor] = TMath::Sin(theta); // weight by sintheta as this is 3d angular distribution
+      else angular_distribution_map[theta_factor][phi_factor] += TMath::Sin(theta);
 
     }
 
-  }
-
-  //-----------------------------------------------------------------------------
-
-  void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistributionMap3D& AngularDistributionMap) const
-  {
   }
 
   //-----------------------------------------------------------------------------

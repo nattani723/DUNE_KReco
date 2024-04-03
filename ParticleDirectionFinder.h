@@ -92,6 +92,7 @@ public:
 
   void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::vector<TVector2>& peak_direction_vectors) const;
 
+  int m_peak_search_region;
   float m_theta_bin_size;
   float m_phi_bin_size;
   int m_smoothing_window;
