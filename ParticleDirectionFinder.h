@@ -80,7 +80,7 @@ public:
    *
    */
 
-  void smooth_angular_distribution_map(AngularDistributionMap3D& Angular_distribution_map) const;
+  void smooth_angular_distribution_map(AngularDistributionMap3D& angular_distribution_map) const;
 
   /*
    * @brief  Obtain the directions from angular distribution peaks
@@ -96,6 +96,7 @@ public:
   float m_theta_bin_size;
   float m_phi_bin_size;
   int m_smoothing_window;
+  int m_peak_search_window;
 
 };
 
