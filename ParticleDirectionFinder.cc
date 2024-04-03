@@ -15,8 +15,37 @@ namespace kaon_reconstruction
 
   //-----------------------------------------------------------------------------
 
-  void CollectSPsInROI(const std::vector<art::Ptr<recob::SpacePoint>>& SPList, const TVector3 KEnd, std::vector<art::Ptr<recob::SpacePoint>>& SPListROI) const
+  void CollectSPsInROI(const SPList& SPList, const TVector3 KEnd, SPList& SPListROI) const
   {
+
+    const TVector3 Xaxis(1.,0.,0.);
+
+    for(auto itSP = SPList.begin(); itSP != SPList.end(); ++spIter){
+      
+    }
+
+    for (auto spIter = sp_from_recoobj.begin(); spIter != sp_from_recoobj.end(); ++spIter) {
+
+      const TVector3 hit_position = (*spIter)->XYZ();
+      //cout << hit_position.X() << endl;
+      const TVector3 distance_vector = hit_position - Kend_candidate;
+
+      if(distance_vector.Mag() > region_of_interest) continue;
+
+      double theta = distance_vector.Theta();
+      double sintheta = TMath::Sin(theta);
+      double phi = distance_vector.Phi();
+
+      int theta_factor = (int)(std::floor(theta / thetaBinSize));
+      int phi_factor = (int)(std::floor(phi / phiBinSize));
+
+      if( angular_distribution_map_3D.find(theta_factor) == angular_distribution_map_3D.end() &&
+	  angular_distribution_map_3D[theta_factor].find(phi_factor) == angular_distribution_map_3D[theta_factor].end() )
+	angular_distribution_map_3D[theta_factor][phi_factor] = sintheta; 
+      else angular_distribution_map_3D[theta_factor][phi_factor] += sintheta;
+
+    }
+
   }
 
   //-----------------------------------------------------------------------------
@@ -49,28 +78,6 @@ namespace kaon_reconstruction
                                                      TVector3 Kend_candidate,
                                                      std::map<int, std::map<int, double>> &angular_distribution_map_3D){
 
-    const TVector3 Xaxis(1.,0.,0.);
-
-    for (auto spIter = sp_from_recoobj.begin(); spIter != sp_from_recoobj.end(); ++spIter) {
-
-      const TVector3 hit_position = (*spIter)->XYZ();
-      //cout << hit_position.X() << endl;
-      const TVector3 distance_vector = hit_position - Kend_candidate;
-
-      if(distance_vector.Mag() > region_of_interest) continue;
-
-      double theta = distance_vector.Theta();
-      double sintheta = TMath::Sin(theta);
-      double phi = distance_vector.Phi();
-
-      int theta_factor = (int)(std::floor(theta / thetaBinSize));
-      int phi_factor = (int)(std::floor(phi / phiBinSize));
-
-      if( angular_distribution_map_3D.find(theta_factor) == angular_distribution_map_3D.end() &&
-	  angular_distribution_map_3D[theta_factor].find(phi_factor) == angular_distribution_map_3D[theta_factor].end() )
-	angular_distribution_map_3D[theta_factor][phi_factor] = sintheta; 
-      else angular_distribution_map_3D[theta_factor][phi_factor] += sintheta;
-
       /*
      if(angular_distribution_map_3D.find(theta_factor) == angular_distribution_map_3D.end()){
         if(angular_distribution_map_3D[theta_factor].find(phi_factor) == angular_distribution_map_3D[theta_factor].end()){
@@ -79,7 +86,7 @@ namespace kaon_reconstruction
       }
       else angular_distribution_map_3D[theta_factor][phi_factor] += sintheta;
       */
-    }
+    // }
 
   }
 

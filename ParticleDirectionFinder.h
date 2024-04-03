@@ -47,6 +47,7 @@ public:
  private:
 
   typdef std::map<int, std::map<int, double>> AngularDistributionMap3D;
+  typdef std::vector<art::Ptr<recob::SpacePoint>> SPList;
 
   /*
    * @brief  Collect spacepoints inside the region of interest (ROI)
@@ -57,7 +58,8 @@ public:
    *
    */
 
-  void CollectSPsInROI(const std::vector<art::Ptr<recob::SpacePoint>>& SPList, const TVector3 KEnd, std::vector<art::Ptr<recob::SpacePoint>>& SPListROI) const;
+  //void CollectSPsInROI(const std::vector<art::Ptr<recob::SpacePoint>>& SPList, const TVector3 KEnd, std::vector<art::Ptr<recob::SpacePoint>>& SPListROI) const;
+  void collect_sp_in_roi(const SPList& SPList, const TVector3 KEnd, SPList& SPListROI) const;
 
   /*
    * @brief  Fill map of angular distribution for spacepoints inside the region of interest (ROI)
