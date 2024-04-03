@@ -40,7 +40,7 @@ namespace HitSplitAlg_module
   //const double growing_fit_initial_length = 20.;
   //const double initial_fit_distance_to_line = 3;
 
-  const double growing_fit_initial_length = 15.;
+  const double growing_fit_initial_length = 10.;
   const double initial_fit_distance_to_line = 5;//3
   //const double initial_fit_distance_to_line = 3;//3
 
@@ -618,11 +618,11 @@ namespace HitSplitAlg_module
 	  distance_to_line = distance_to_line_default;
 	  hit_connection_distance = hit_connection_distance_default;
 	  
-	  /*
+	  
 	  for(auto pandora_running_fit_position : pandora_running_fit_position_vec){
 	    cout << pandora_running_fit_position.GetX() << " " << pandora_running_fit_position.GetY() << " " << pandora_running_fit_position.GetZ() << endl;
 	  }
-	  */
+	  
 	  
 	  
 	  const lar_content::ThreeDSlidingFitResult extrapolated_fit(&pandora_running_fit_position_vec, macro_sliding_fit_window, sliding_fit_pitch);
@@ -721,7 +721,7 @@ namespace HitSplitAlg_module
             }
 
             extrapolated_end_position = extrapolated_start_position + (extrapolated_direction * growing_fit_segment_length);
-	    cout << "extrapolated_direction for count " << count << " is " << extrapolated_direction.X() << " " << extrapolated_direction.Y() << " "  << extrapolated_direction.Z() << endl;
+	    //cout << "extrapolated_direction for count " << count << " is " << extrapolated_direction.X() << " " << extrapolated_direction.Y() << " "  << extrapolated_direction.Z() << endl;
 
             hits_collected = this->collectSubsectionHits(spineall_extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_from_pfparticle, running_fit_position_vec, pandora_running_fit_position_vec, unavailable_hit_list, shower_spine_hit_list);
 
@@ -780,7 +780,7 @@ namespace HitSplitAlg_module
 	      }
 
 	      extrapolated_end_position = extrapolated_start_position + (extrapolated_direction * growing_fit_segment_length);
-	      cout << "extrapolated_direction for count " << count << " is " << extrapolated_direction.X() << " " << extrapolated_direction.Y() << " "  << extrapolated_direction.Z() << endl;
+	      //cout << "extrapolated_direction for count " << count << " is " << extrapolated_direction.X() << " " << extrapolated_direction.Y() << " "  << extrapolated_direction.Z() << endl;
 
 	      hits_collected = this->collectSubsectionHits(micro_extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_from_pfparticle, running_fit_position_vec, pandora_running_fit_position_vec, unavailable_hit_list, shower_spine_hit_list);
 	    }
@@ -977,7 +977,7 @@ namespace HitSplitAlg_module
 	    TVector3 hit_position = fHitsToSpacePoints_old.at(collected_hits[i_h])->XYZ();
 	    pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
 
-	    //cout << "closest distance: " << this->getClosestDistance(hit_position, running_fit_position_vec) << " " << hit_connection_distance << endl;
+	    cout << "closest distance: " << this->getClosestDistance(hit_position, running_fit_position_vec) << " " << hit_connection_distance << endl;
 
 	    if(this->getClosestDistance(hit_position, running_fit_position_vec) > hit_connection_distance){
 	      continue;
