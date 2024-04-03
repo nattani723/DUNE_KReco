@@ -4,9 +4,9 @@ using namespace pandora;
 
 namespace kaon_reconstruction
 {
-
+  
   ParticleDirectionFinder::ParticleDirectionFinder() :
-
+      
     //m_peak_searh_region(15.),
     m_theta_bin_size(0.06),
     m_phi_bin_size(0.06),
@@ -18,8 +18,9 @@ namespace kaon_reconstruction
   {
   }
 
-  //------------------------------------------------------------------------------------------------------------------------------------------ 
- 
+  //------------------------------------------------------------------------------------------------------------------------------------------
+
+
   void ParticleDirectionFinder::collect_sp_in_roi(const SPList& sp_list, const TVector3& k_end, double& region_of_interest, SPList& sp_list_roi) const
   {
 
