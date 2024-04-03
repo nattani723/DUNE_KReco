@@ -7,17 +7,20 @@ namespace kaon_reconstruction
 
   ParticleDirectionFinder::ParticleDirectionFinder() :
 
-    m_peak_searh_region(15.),
+    //m_peak_searh_region(15.),
     m_theta_bin_size(0.06),
     m_phi_bin_size(0.06),
     m_smoothing_window(1),
-    m_peak_search_window(1)
+    m_peak_search_window(1),
+    m_peak_open_angle(TMath::Pi() * 1/4),
+    m_min_peak_height(0.4),
+    m_max_num_peak(3)
   {
   }
 
-  //-----------------------------------------------------------------------------
-
-  void ParticleDirectionFinder::collect_sp_in_roi(const SPList& sp_list, const TVector3 k_end, SPList& sp_list_roi) const
+  //------------------------------------------------------------------------------------------------------------------------------------------ 
+ 
+  void ParticleDirectionFinder::collect_sp_in_roi(const SPList& sp_list, const TVector3& k_end, double& region_of_interest, SPList& sp_list_roi) const
   {
 
     for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp){
@@ -25,7 +28,7 @@ namespace kaon_reconstruction
       const TVector3 hit_position = (*it_sp)->XYZ();
       const TVector3 displacement_vector = hit_position - k_end;
 
-      if( displacement_vector.Mag() > m_peak_searh_region) continue;
+      if( displacement_vector.Mag() > region_of_interest) continue;
 
       sp_list_roi.push_back(*it_sp);
 
@@ -35,7 +38,7 @@ namespace kaon_reconstruction
 
   //-----------------------------------------------------------------------------
 
-  void ParticleDirectionFinder::fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistributionMap3D& angular_distribution_map) const
+  void ParticleDirectionFinder::fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3& k_end, AngularDistributionMap3D& angular_distribution_map) const
   {
 
     const TVector3 x_axis(1.,0.,0.);
@@ -110,10 +113,12 @@ namespace kaon_reconstruction
 
   //-----------------------------------------------------------------------------
 
-  void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::vector<TVector2>& peak_direction_vectors) const
+  void ParticleDirectionFinder::retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::map<double, TVector3, std::greater<>>& sort_peak_direction_map) const
 
   {
 
+    //sort peaks by their height (high -> low)
+    //std::map<double, TVector3, std::greater<>> sort_peak_direction_map;
 
     for(auto const& theta_entry : angular_distribution_map){
 
@@ -149,179 +154,46 @@ namespace kaon_reconstruction
 	}
 
 	// If the current bin is determined to be a peak, record its weight and position
-	if (is_peak) {
-	  TVector2 peak_position(bin_theta, bin_phi);
-	  view_peak_map[bin_weight] = peak_position; // Peaks are sorted by weight
-	} 
-
-      }
+	  if (is_peak) {
+	    //TVector2 peak_position(bin_theta, bin_phi);
+	    TVector3 peak_direction.SetMagTheta(1, bin_theta*m_theta_bin_size, bin_phi*m_phi_bin_size);
+	    sort_peak_direction_map[bin_weight] = peak_direction; // Peaks are sorted by weight
+	  } 
+	}
+      }   
     }
-    
   }
 
-
   //-----------------------------------------------------------------------------
+
+  void ParticleDirectionFinder::refine_peak_directions(const std::map<double, TVector3, std::greater<>>& sort_peak_direction_map, vector<TVector3> &peak_direction_vector) const
+  {
+
+    if(sort_peak_direction_map.empty()) return;
+
+    // Start with the highest-weighted peak
+    const TVector3& highest_peak_direction = sort_peak_direction_map.begin()->second;
+    peak_direction_vector.push_back(highest_peak_direction);
+
+    // Iterate through remaining peaks to find those significantly different in direction
+
+    for(const auto& entry : sort_peak_direction_map) {
+
+      TVector3 current_peak_direction = entry.second;
+      if(current_peak_direction == highest_peak_direction) continue; // Skip the highest peak itself
+
+      double open_angle = current_peak_direction.Angle(highest_peak_direction);
+      
+      // Consider a peak significant if it's sufficiently angularly separated or too low
+      if(open_angle > m_peak_open_angle && entry.first > m_min_peak_height)
+	peak_direction_vector.push_back(current_peak_direction);
+
+      if (best_peak_bins.size() >= m_max_num_peak) break;
+	
+    }
+
+  }
 
 } // namespace kaon_reconstruction
 
 
-
-  //------------------------------------------------------------------------------------------------------------------------------------------ 
- 
-  bool HitSplitAlg::isInsideROI( art::Ptr<recob::SpacePoint> &sp,
-				TVector3 Kend_candidate)
-  {
-    const TVector3 hit_position = sp->XYZ();
-    const TVector3 distance_vector = hit_position - Kend_candidate;
-    if(distance_vector.Mag() < region_of_interest_hitcandidate) return true;
-    else return false;
-  }
-
-
-  //------------------------------------------------------------------------------------------------------------------------------------------ 
-
-  void HitSplitAlg::fillHistAngularDistributionMap3DCheat( std::vector<art::Ptr<recob::SpacePoint>>& sp_from_recoobj,
-							   TVector3 Kend_candidate,
-							   std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_map_3D_cheat,
-							   std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D){
-    
-    const TVector3 Xaxis(1.,0.,0.);
-
-    const simb::MCParticle *particletmp;
-    if(!sp_from_recoobj.size()) return;
-
-    for (auto spIter = sp_from_recoobj.begin(); spIter != sp_from_recoobj.end(); ++spIter) {
-
-      const TVector3 hit_position = (*spIter)->XYZ();
-      const TVector3 distance_vector = hit_position - Kend_candidate;
-      //art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(*spIter);
-      art::Ptr<recob::Hit> hit = fSpacePointsToHits_old.at(*spIter);
-      truthHitMatcher(hit, particletmp);
-
-      if(distance_vector.Mag() > region_of_interest) continue;
-      if(!particletmp) continue;
-
-      double theta = distance_vector.Theta();
-      double sintheta = TMath::Sin(theta);
-      double phi = distance_vector.Phi();
-
-      int theta_factor = (int)(std::floor(theta / thetaBinSize));
-      int phi_factor = (int)(std::floor(phi / phiBinSize));
-      int pdg = particletmp->PdgCode();
-
-      if( (angular_distribution_map_3D_cheat.find(pdg) == angular_distribution_map_3D_cheat.end()) &&
-	  (angular_distribution_map_3D_cheat[pdg].find(theta_factor) == angular_distribution_map_3D_cheat[pdg].end()) &&
-	  (angular_distribution_map_3D_cheat[pdg][theta_factor].find(phi_factor) == angular_distribution_map_3D_cheat[pdg][theta_factor].end()) ){
-	angular_distribution_map_3D_cheat[pdg][theta_factor][phi_factor] = sintheta;
-      }
-      else angular_distribution_map_3D_cheat[pdg][theta_factor][phi_factor] += sintheta;
-
-    }
-    
-    //cout << "angular_distribution_map_3D_cheat.size(): " << angular_distribution_map_3D_cheat.size() << endl;
-    if(angular_distribution_map_3D_cheat.size()==0) return;
-
-    for (auto const& angular_distribution_map_3D : angular_distribution_map_3D_cheat){
-
-      TH2D * h = new TH2D("", "", num_bin_theta, 0, 3.14, num_bin_phi, -3.14, 3.14);
-      for (auto const& x : angular_distribution_map_3D.second){
-	for (auto const& y : x.second)
-	  h->Fill(thetaBinSize * x.first, phiBinSize * y.first, y.second);
-      }
-      //cout << angular_distribution_map_3D.first << " " << h->GetEntries() << endl;
-      h_angular_distribution_pfparticle_cheat_3D[angular_distribution_map_3D.first] = h;
-      //cout<< h_angular_distribution_pfparticle_cheat_3D.size() << endl;
-      //h_angular_distribution_pfparticle_cheat_3D.push_back(h);
-    }
-
-  }
-
-
-  //-----------------------------------------------------------------------------------------------------------------------------------------------------  
-
-
-
-  //------------------------------------------------------------------------------------------------------------------------------------------  
-
-  void HitSplitAlg::accumulateAngularDistributionMap3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D_1,
-                                                          std::map<int, std::map<int, double>> &angular_distribution_map_3D_2,
-                                                          std::map<int, std::map<int, double>> &angular_distribution_map_3D){
- 
-
-    angular_distribution_map_3D = angular_distribution_map_3D_1;
-
-    for( auto const& angular_distribution_map_3D_theta_2 : angular_distribution_map_3D_2){
-      for( auto const& angular_distribution_map_3D_phi_2 : angular_distribution_map_3D_theta_2.second){
-        if( angular_distribution_map_3D[angular_distribution_map_3D_theta_2.first].find( angular_distribution_map_3D_phi_2.first ) == angular_distribution_map_3D[angular_distribution_map_3D_theta_2.first].end() ) angular_distribution_map_3D[angular_distribution_map_3D_theta_2.first][angular_distribution_map_3D_phi_2.first] = angular_distribution_map_3D_phi_2.second;
-        else{
-          angular_distribution_map_3D[angular_distribution_map_3D_theta_2.first][angular_distribution_map_3D_phi_2.first] += angular_distribution_map_3D_phi_2.second;
-          //cout << "ACCUMULATE "  << angular_distribution_map_3D_1[angular_distribution_map_3D_theta_2.first][angular_distribution_map_3D_phi_2.first] << " " << angular_distribution_map_3D_2[angular_distribution_map_3D_theta_2.first][angular_distribution_map_3D_phi_2.first] << " " << angular_distribution_map_3D[angular_distribution_map_3D_theta_2.first][angular_distribution_map_3D_phi_2.first] << endl;
-        }
-      }
-    }
-  }
-
-
-
-  //------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                
-
-  void HitSplitAlg::obtainPeakVector3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D,
-                                          vector<bool>& v_trk_flg_peak,
-                                          std::map<double, TVector2, std::greater<>>& view_peak_map,
-                                          bool trk_flg){
-    //vector<TVector2>& view_peak_vector,                                                                                                                                                                                                                                                                                     
-
-
-  }
-
-
-  //------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                                
-
-  void HitSplitAlg::findBestAngularPeak3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D,
-                                             std::map<double, TVector2, std::greater<>>& view_peak_map,
-                                             vector<TVector2> &best_peak_bins){ 
-
-    if(view_peak_map.size()==0) return;
-    const TVector2 best_peak_bin = view_peak_map.begin()->second;
-    //if(view_peak_map.begin()->first < 1) return;
-    best_peak_bins.push_back(best_peak_bin);
-    //cout << "view_peak_map[0] is " << view_peak_map.begin()->first << " " << view_peak_map.begin()->second.X() << endl;
-    //cout << "best_peak_bin is " << best_peak_bin.X()*thetaBinSize << " " << best_peak_bin.Y()*thetaBinSize << endl;
-
-    TVector3 best_peak_dir;
-    Double_t theta_best = best_peak_bin.X()*thetaBinSize;
-    Double_t phi_best = best_peak_bin.Y()*phiBinSize;
-
-    best_peak_dir.SetMagThetaPhi(1., theta_best, phi_best);
- 
-    cout << "view_peak_map.size(): " << view_peak_map.size() << endl;
-
-    for (auto const& entry : view_peak_map){
-
-      TVector2 theta_phi_bin = entry.second;
-      TVector3 view_peak_dir;
-      Double_t theta_view = theta_phi_bin.X()*thetaBinSize;
-      Double_t phi_view = theta_phi_bin.Y()*phiBinSize;
-
-      view_peak_dir.SetMagThetaPhi(1., theta_view, phi_view);
- 
-      if(!(theta_phi_bin.X() == best_peak_bin.X() && theta_phi_bin.Y() == best_peak_bin.Y())){
-
-        double open_angle = view_peak_dir.Angle(best_peak_dir);
-
-	//cout << "open_angle: " << open_angle << ", entry.first: " << entry.first << endl;
- 
-        //if(open_angle > TMath::Pi()*2/3 && entry.first>0.4) best_peak_bins.push_back(theta_phi_bin);
-        if(open_angle > TMath::Pi()*1/4 && entry.first>0.4) best_peak_bins.push_back(theta_phi_bin);
- 
-      }
-      if(best_peak_bins.size() >= 3) break; //just look second highest peak with large opening angle
-    }
-
-    /*
-    for(auto const& entry : best_peak_bins){
-      cout << "best peaks are: " << entry.X()*thetaBinSize << " " << entry.Y()*phiBinSize << endl;
-    }
-    */
-
-  }

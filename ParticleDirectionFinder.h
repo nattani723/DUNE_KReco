@@ -49,6 +49,7 @@ public:
   typdef std::map<int, std::map<int, double>> AngularDistributionMap3D;
   typdef std::vector<art::Ptr<recob::SpacePoint>> SPList;
 
+
   /*
    * @brief  Collect spacepoints inside the region of interest (ROI)
    *
@@ -58,8 +59,8 @@ public:
    *
    */
 
-  //void CollectSPsInROI(const std::vector<art::Ptr<recob::SpacePoint>>& SPList, const TVector3 KEnd, std::vector<art::Ptr<recob::SpacePoint>>& SPListROI) const;
-  void collect_sp_in_roi(const SPList& sp_list, const TVector3 k_end, SPList& sp_list_roi) const;
+  //void collect_sp_in_roi(const SPList& sp_list, const TVector3 k_end, SPList& sp_list_roi) const;
+  void collect_sp_in_roi(const SPList& sp_list, const TVector3& k_end, double& region_of_interest, SPList& sp_list_roi) const;
 
   /*
    * @brief  Fill map of angular distribution for spacepoints inside the region of interest (ROI)
@@ -86,19 +87,35 @@ public:
    * @brief  Obtain the directions from angular distribution peaks
    * 
    * @param angular_distribution_map: output map 
-   * @param peak_direction_vectors: vector of obtained peak directions
+   * @param sort_peak_direction_map: vector of obtained peak directions sorted by peak height from high to low
    * 
    */
 
-  void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::vector<TVector2>& peak_direction_vectors) const;
+  //void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::vector<TVector2>& peak_direction_vectors) const;
+  void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::map<double, TVector3, std::greater<>>& sort_peak_direction_map) const;
 
-  int m_peak_search_region;
+  /*
+   * @brief  Remove some peak candidates depending on their height or opnening angles
+   * 
+   * @param sort_peak_direction_map: vector of obtained peak directions sorted by peak height from high to low
+   * @param peak_direction_vector: vector of peak direction vector
+   * 
+   */
+
+  void refine_peak_directions(const std::map<double, TVector3, std::greater<>>& sort_peak_direction_map, vector<TVector3> &peak_direction_vector) const;
+
+
+  //int m_peak_search_region;
   float m_theta_bin_size;
   float m_phi_bin_size;
   int m_smoothing_window;
   int m_peak_search_window;
+  double m_peak_open_angle;
+  double m_min_peak_height;
+  int m_max_num_peak;
 
 };
+
 
 } // end of namespace kaon_reconstruction
 
