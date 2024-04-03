@@ -52,48 +52,49 @@ public:
   /*
    * @brief  Collect spacepoints inside the region of interest (ROI)
    *
-   * @param SPList: spacepoint list of K+ daughter candidate hits
-   * @param KEnd: vector of K+ track candidate's end
-   * @param SPListROI: spacepoint list inside the ROI
+   * @param sp_list: spacepoint list of K+ daughter candidate hits
+   * @param k_end: vector of K+ track candidate's end
+   * @param sp_list_roi: spacepoint list inside the ROI
    *
    */
 
   //void CollectSPsInROI(const std::vector<art::Ptr<recob::SpacePoint>>& SPList, const TVector3 KEnd, std::vector<art::Ptr<recob::SpacePoint>>& SPListROI) const;
-  void collect_sp_in_roi(const SPList& SPList, const TVector3 KEnd, SPList& SPListROI) const;
+  void collect_sp_in_roi(const SPList& sp_list, const TVector3 k_end, SPList& sp_list_roi) const;
 
   /*
    * @brief  Fill map of angular distribution for spacepoints inside the region of interest (ROI)
    *
-   * @param SPListROI: spacepoint list inside the ROI
-   * @param KEnd: vector of K+ track candidate's end
-   * @param AngularDistributionMap: output map 
+   * @param sp_list_roi: spacepoint list inside the ROI
+   * @param k_end: vector of K+ track candidate's end
+   * @param angular_distribution_map: output map 
    *
    */
 
-  void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistributionMap3D& AngularDistributionMap) const;
+  //void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistributionMap3D& AngularDistributionMap) const;
+  void fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistributionMap3D& angular_distribution_map) const;
 
   /*
    * @brief  Smooth out the angular distribution map
    *
-   * @param AngularDistributionMap: output map
+   * @param angular_distribution_map: output map
    *
    */
 
-  void SmoothAngularDistributionMap(AngularDistributionMap3D& AngularDistributionMap) const;
+  void smooth_angular_distribution_map(AngularDistributionMap3D& Angular_distribution_map) const;
 
   /*
    * @brief  Obtain the directions from angular distribution peaks
    * 
-   * @param AngularDistributionMap: output map 
-   * @param PeakDirectionVectors: vector of obtained peak directions
+   * @param angular_distribution_map: output map 
+   * @param peak_direction_vectors: vector of obtained peak directions
    * 
    */
 
-  void RetrievePeakDirections(const AngularDistributionMap3D& AngularDistributionMap, std::vector<TVector2>& PeakDirectionVectors) const;
+  void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::vector<TVector2>& peak_direction_vectors) const;
 
-  float m_ThetaBinSize;
-  float m_PhiBinSize;
-  int m_SmoothingWindow;
+  float m_theta_bin_size;
+  float m_phi_bin_size;
+  int m_smoothing_window;
 
 };
 
