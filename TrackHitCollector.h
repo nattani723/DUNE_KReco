@@ -72,7 +72,7 @@ namespace kaon_reconstruction
     //const double get_wire_pitch();
 
     /**
-     * @brief  Perform a running fit to collect the hits of the daughter track
+     * @brief Perform a running fit to collect the hits of the daughter track
      *
      * @param sp_list: spacepoint list of K+ daughter candidate hits
      * @param unavailable_hit_list: protected hits that cannot be collected
