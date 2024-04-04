@@ -111,11 +111,10 @@ namespace kaon_reconstruction
      *  @brief  Sort the list of sp by distance from 2nd parameter
      *
      *  @param  sp_list: spacepoint list
-     *  @param  pandora_sort_position: take the distance between sp in list and this position
+     *  @param  sort_position: take the distance between sp in list and this position
      *
      */
-
-    void sort_sp_by_distance(SPList& sp_list, const pandora::CartesianVector& pandora_sort_position) const;
+    void TrackHitCollector::sort_sp_by_distance(SPList& sp_list, const TVector3& sort_position) cons;t
 
     /**
      *  @brief  Determine whether a hit lies close to the track projection

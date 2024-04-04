@@ -246,40 +246,21 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-  void TrackHitCollector::sort_sp_by_distance(SPList& sp_list, const pandora::CartesianVector& pandora_sort_position) const
+  void TrackHitCollector::sort_sp_by_distance(SPList& sp_list, const pandora::TVector3& sort_position) const
   {
 
-    // SP and hit positions are confusing, better rename to make it consistent
+    // SP and hit positions are confusing, better rename to make it consistent 
 
-    pandora::CartesianPointVector pandora_hit_position_vec;
+    std::sort(sp_list.begin(), sp_list.end(),
+              [&sort_position](const art::Ptr<recob::SpacePoint>& sp1, const art::Ptr<recob::SpacePoint>& sp2) {
+		const TVector3 position1 = sp1->XYZ();
+		const TVector3 position2 = sp2->XYZ();
 
-    for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp)　{
+		double distance1 = (position1 - sort_position).GetMagnitudeSquared();
+		double distance2 = (position2 - sort_position).GetMagnitudeSquared();
 
-      const TVector3 hit_position = (*it_sp)->XYZ();
-      pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
-      pandora_hit_position_vec.push_back(pandora_hit_position);
-
-    }
-
-    lar_content::LArConnectionPathwayHelper::SortByDistanceToPoint sort_start(pandora_sort_position);
-    std::sort(pandora_hit_position_vec.begin(), pandora_hit_position_vec.end(), sort_start);
-
-    std::vector<art::Ptr<recob::SpacePoint>> sp_list_sorted;
-    for(size_t i_hit=0; i_hit<pandora_hit_position_vec.size(); i_hit++) { 
-
-      TVector3 sorted_position;
-      sorted_position.SetXYZ(pandora_hit_position_vec[i_hit].GetX(), pandora_hit_position_vec[i_hit].GetY(), pandora_hit_position_vec[i_hit].GetZ());
-      
-      for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp) {
-	const TVector3 hit_position = (*it_sp)->XYZ();
-	if(sort_position == hit_position) {
-	  sp_list_sorted.push_back(*it_sp);
-	  break;
-	}
-      }
-    }
-    sp_list = sp_list_sorted;
-    
+		return distance1 < distance2;
+              });
   }
 
   //------------------------------------------------------------------------------------------------------------------------------------------
