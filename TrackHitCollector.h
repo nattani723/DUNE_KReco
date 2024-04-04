@@ -138,9 +138,11 @@ namespace kaon_reconstruction
      *  @param  running_fit_position_vector: the vector of the collected hit positions
      *  @param  pandora_running_fit_position_vector: CartesianPointVector of the collected hit positions
      *  @param  track_hit_list: the list of collected track hits
+     *  @param  distance_to_line: the comparison distance for 'is close'
+     *
      */
 
-    void collect_connected_hits(HitList& collected_hit_list, const TVector3& extrapolated_start_position, const TVector3& extrapolated_direction, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& track_hit_list) const;
+    void collect_connected_hits(HitList& collected_hit_list, const TVector3& extrapolated_start_position, const TVector3& extrapolated_direction, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& track_hit_list, float& hit_connection_distance) const;
 
     /**
      *  @brief  Find the smallest distance between a position and a list of other positions

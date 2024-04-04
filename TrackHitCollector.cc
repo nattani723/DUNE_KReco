@@ -259,7 +259,7 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 
     // Now find a continuous path of collected hits
     const int n_initial_hits(track_hit_list.size());
-    this->collect_connected_hits(collected_hit_list, extrapolated_start_position, extrapolated_direction, running_fit_position_vec, pandora_running_fit_position_vec, track_hit_list);
+    this->collect_connected_hits(collected_hit_list, extrapolated_start_position, extrapolated_direction, running_fit_position_vec, pandora_running_fit_position_vec, track_hit_list, hit_connection_distance);
     const int n_final_hits(track_hit_list.size());
 
     return (n_final_hits != n_initial_hits); 
@@ -298,8 +298,32 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-  void TrackHitCollector::collect_connected_hits(HitList& collected_hit_list, const TVector3& extrapolated_start_position, const TVector3& extrapolated_direction, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& track_hit_list) const
+  void TrackHitCollector::collect_connected_hits(HitList& collected_hit_list, const TVector3& extrapolated_start_position, const TVector3& extrapolated_direction, TVector3& running_fit_position_vec, pandora::CartesianPointVector& pandora_running_fit_position_vec, HitList& track_hit_list, float& hit_connection_distance) const
   {
+
+    // Now add connected hits  
+    bool found = true;
+
+    while(found) {
+
+      for(size_t i_h=0; i_h<track_hit_list.size(); i_h++){ 
+
+	if(std::find(track_hit_list.begin(), track_hit_list.end(), collected_hit_list[i_h]) != track_hit_list.end()) continue;
+
+	TVector3 hit_position = fHitsToSpacePoints.at(collected_hit_list[i_h])->XYZ();
+	pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
+
+	if( this->get_closest_distance(hit_position, running_fit_position_vec) > hit_connection_distance )
+	  continue;
+
+	found = true;
+	running_fit_position_vec.push_back(hit_position);
+	pandora_running_fit_position_vec.push_back(pandora_hit_position); 
+	track_hit_list.push_back(collected_hits[i_h]);
+
+      }      
+
+    }
 
   }
 
