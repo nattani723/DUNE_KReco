@@ -8,14 +8,17 @@ namespace kaon_reconstruction
   
   TrackHitCollector::TrackHitCollector() :
       
-    //m_peak_searh_region(15.),
-    m_theta_bin_size(0.06),
-    m_phi_bin_size(0.06),
-    m_smoothing_window(1),
-    m_peak_search_window(1),
-    m_peak_open_angle(TMath::Pi() * 1/4),
-    m_min_peak_height(0.4),
-    m_max_num_peak(3)
+    m_hit_threshold_for_track(30),
+    m_growing_fit_initial_length(10.f),
+    m_initial_fit_distance_to_line(3.f),
+    m_min_initial_hits_found(7),
+    m_max_fitting_hits(15),
+    m_local_sliding_fit_window(10),
+    m_growing_fit_segment_length(5.f),
+    m_high_resolution_sliding_fit_window(5),
+    m_distance_to_line(1.f),
+    m_hit_connection_distance(1.f).
+    m_trackall_sliding_fit_window(5)
   {
   }
 
