@@ -1,0 +1,91 @@
+#include "AngularDistributionDrawer.h"
+
+namespace kaon_reconstruction
+{
+
+void HitSplitAlg::fillHistAngularDistributionMap3DCheat( std::vector<art::Ptr<recob::SpacePoint>>& sp_from_recoobj,
+							 Vector3 Kend_candidate,
+							 std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_map_3D_cheat,
+											      std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D);
+											      
+											      void fill_angular_distribution_map_cheated_pdg(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistributionMap3D& angular_distribution_map_cheated_pdg, std::map<int, TH2D*> &h_angular_distribution_cheated_pdg) const
+											      {
+											      }
+
+    //------------------------------------------------------------------------------------------------------------------------------------------                                                                                                                                                                   
+    void HitSplitAlg::drawHistAngularDistributionMap3DCheat( std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D,
+							     TString outfile_name,
+							     TCanvas* &c){
+      
+      TFile outfile(outfile_name, "update");
+      auto hs = new THStack("hs", "");
+      TLegend * leg = new TLegend(0.7, 0.7, 0.9, 0.9, "");
+      c->SetFillStyle(1001);
+      
+      if(h_angular_distribution_pfparticle_cheat_3D.size()==0) return;
+      
+      std::map<int, TH2D*>::iterator it;
+      //cout << "h_angular_distribution_pfparticle_cheat_3D.size(): " << h_angular_distribution_pfparticle_cheat_3D.size() << endl;
+
+      for(it=h_angular_distribution_pfparticle_cheat_3D.begin(); it!=h_angular_distribution_pfparticle_cheat_3D.end(); it++){
+
+	it->second->SetFillStyle(1001);
+	//cout << "it->first: " << it->first << ", it->second->GetEntries(): " << it->second->GetEntries() << endl;
+
+	if(it->first == 321){
+	  it->second->SetFillColor(kBlue);
+	  //leg->AddEntry(it->second, "K+");
+	}
+	else if(it->first == -13){
+	  it->second->SetFillColor(kCyan);
+	  //leg->AddEntry(it->second, "mu+");
+	}
+	else if(it->first == 211){
+	  it->second->SetFillColor(kMagenta);
+	  //leg->AddEntry(it->second, "pi+");
+	}
+	else if(it->first == -11 || it->first == 11){
+	  it->second->SetFillColor(kGreen+2);
+	  //leg->AddEntry(it->second, "shower");
+	}
+	else if(it->first == 2212 || it->first == 2112){
+	  it->second->SetFillColor(kRed);
+	  //leg->AddEntry(it->second, "nucleon");
+	}
+	else{
+	  it->second->SetFillColor(kBlack);
+	}
+	hs->Add(it->second);
+
+      }
+
+      /*
+      for(auto const& h_org: h_angular_distribution_pfparticle_cheat_3D){
+
+	TH2D h = h_org;	
+	h.second.SetFillStyle(1001);
+	
+	if(h.first == 321) h.second.SetFillColor(kBlue);
+	else if(h.first == -13) h.second.SetFillColor(kCyan);
+	else if(h.first == 211) h.second.SetFillColor(kMagenta);
+	else if(h.first == -11 || h.first == 11) h.second.SetFillColor(kGreen+2);
+	else if(h.first == 2212 || 2112) h.second.SetFillColor(kRed);
+	else h.second.SetFillColor(kBlack);
+	hs->Add(h.second);
+	
+      }
+      */
+      hs->Draw("hist""lego3 0");
+      //hs->Draw("hist nostack");                                                                                                                                                                                                                                                                                      
+      leg->Draw();
+      c->Write();
+      
+      delete hs;
+      delete leg;
+      
+      return;
+      
+    }
+
+
+}
