@@ -71,9 +71,9 @@ namespace kaon_reconstruction
       pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
         
       // Calculate distance and alignment vectors relative to the endpoint and peak direction
-      const TVector3 distance_vector = hit_position - k_end;
-      const double l = peak_direction.Dot(distance_vector); // Projection length along peak direction
-      const double t = peak_direction.Cross(distance_vector).Mag(); // Perpendicular distance to peak direction
+      const TVector3 distance = hit_position - k_end;
+      const double l = peak_direction.Dot(distance); // Projection length along peak direction
+      const double t = peak_direction.Cross(distance).Mag(); // Perpendicular distance to peak direction
 
       // Filter hits based on proximity to the peak direction and availability
       if ((l < m_growing_fit_initial_length) && (l > 0.) && (t < m_initial_fit_distance_to_line)) { 
@@ -146,8 +146,40 @@ namespace kaon_reconstruction
       // apply nominal fit
       this->update_extrapolation(count, extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream);
       
-      hits_collected = this->collect_subsection_hits(extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_list, running_fit_position_vector, pandora_running_fit_position_vector, unavailable_hit_list, track_hit_list);
+      hits_collected = this->collect_subsection_hits(extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_list, running_fit_position_vec, pandora_running_fit_position_vec, unavailable_hit_list, track_hit_list, m_distance_to_line, m_hit_connection_distance);
 
+
+      // If no hits found, fit by all collected hits
+      if (!hits_collected){
+	
+	// fill pandora_running_fit_position_trackall_vector by storingg all positions of track hits collected so far
+	pandora::CartesianPointVector pandora_running_fit_position_trackall_vec;
+
+	for(size_t i_h=0; i_h<track_hit_list.size(); i_h++) { 
+	  const TVector3 hit_position = fHitsToSpacePoints.at(track_hit_list[i_h])->XYZ(); 
+	  const pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
+	  pandora_running_fit_position_trackall_vector.push_back(pandora_hit_position);
+	}
+
+	const lar_content::ThreeDSlidingFitResult extrapolated_fit_trackall(&pandora_running_fit_position_trackall_vec, m_trackall_sliding_fit_window, sliding_fit_pitch);
+	this->update_extrapolation(count, extrapolated_fit_trackall, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, m_distance_to_line, m_hit_connection_distance);
+
+      }
+
+
+      // If no hits found, as a final effort, reduce the sliding fit window
+      if (!hits_collected){
+	
+	const lar_content::ThreeDSlidingFitResult extrapolated_fit_micro(&pandora_running_fit_position_track_vec, m_high_resolution_sliding_fit_window, sliding_fit_pitch);
+	this->update_extrapolation(count, extrapolated_fit_micro, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, m_distance_to_line, m_hit_connection_distance);
+
+      }
+
+      // demand track has a significant number of collected hits
+      if (track_hit_list.size() < m_hit_threshold_for_track) {
+	track_hit_list.clear();
+	return;
+      }
     }
 
 
@@ -156,7 +188,8 @@ namespace kaon_reconstruction
  
   //------------------------------------------------------------------------------------------------------------------------------------------    
 
-  void TrackHitCollector::update_extrapolation(int count, const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const
+  //void TrackHitCollector::update_extrapolation(int count, const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const
+void TrackHitCollector::update_extrapolation(int count, const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream) const
   {
 
     /*
@@ -192,7 +225,7 @@ namespace kaon_reconstruction
 
   //------------------------------------------------------------------------------------------------------------------------------------------    
 
-  bool TrackHitCollector::collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit. const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const;
+bool TrackHitCollector::collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit. const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list, float& distance_to_line, float& hit_connection_distance)) const;
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------

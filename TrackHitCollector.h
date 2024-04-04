@@ -66,10 +66,24 @@ namespace kaon_reconstruction
      *  @param  unavailable_hit_list: protected hits that cannot be collected
      *  @param  track_hit_list: the output list of daughter track hits 
      *
-     *  @return whether any hits were collected in the running fit step
      */
 
     void update_extrapolation(int count, const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const;
+
+    /**
+     *  @brief  Reassign extrapolated direction and start/end positions
+     *
+     *  @param  count: n-th step path (how many times it has been looping)
+     *  @param  extrapolated_fit: the fit to the collected hits on each step path
+     *  @param  extrapolated_start_position: the track step path projection start position
+     *  @param  extrapolated_end_position the track step path projection end position
+     *  @param  extrapolated_direction: the track step path projection direction
+     *  @param  is_end_downstream whether the shower direction is downstream (in Z) of the kaon track end
+     *
+     */
+
+    void update_extrapolation(int count, const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream) const;
+
 
     /**
      *  @brief  Perform a running fit step: collect hits which lie close to the track step path projection
@@ -84,11 +98,13 @@ namespace kaon_reconstruction
      *  @param  pandora_running_fit_position_vector: CartesianPointVector of the collected hit positions
      *  @param  unavailable_hit_list: protected hits that cannot be collected
      *  @param  track_hit_list: the output list of daughter track hits 
+     *  @param  distance_to_line: the comparison distance for 'is close'  
+     *  @param  hit_connection_distanc: separation between connected hits
      *
      *  @return whether any hits were collected in the running fit step
      */
 
-    bool collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const;
+    bool collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list, float& distance_to_line, float& hit_connection_distance) const;
 
     /**
      *  @brief  Determine whether a hit lies close to the track projection
@@ -138,6 +154,7 @@ namespace kaon_reconstruction
     unsigned int m_high_resolution_sliding_fit_window; ///< The high resolution sliding fit window for track fits
     float m_distance_to_line;                        ///< The max. proximity to the spine projection for collection
     float m_hit_connection_distance;                 ///< The max. separation between connected hits
+    float m_trackall_sliding_fit_window;
 
   } // end of class
   
