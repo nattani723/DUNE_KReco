@@ -44,7 +44,7 @@ namespace kaon_reconstruction
   private:
     
     typdef std::vector<art::Ptr<recob::SpacePoint>> SPList;
-    typdef std::map<int, std::map<int, double>> AngularDistributionMap3D;
+    typdef std::map<int, std::map<int, double>> AngularDistribution3DMap;
 
   /*
    * @brief  Collect spacepoints inside the region of interest (ROI)
@@ -67,8 +67,8 @@ namespace kaon_reconstruction
    *
    */
 
-  //void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistributionMap3D& AngularDistributionMap) const;
-  void fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistributionMap3D& angular_distribution_map) const;
+  //void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistribution3DMap& AngularDistributionMap) const;
+  void fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistribution3DMap& angular_distribution_map) const;
 
   /*
    * @brief  Smooth out the angular distribution map
@@ -77,7 +77,7 @@ namespace kaon_reconstruction
    *
    */
 
-  void smooth_angular_distribution_map(AngularDistributionMap3D& angular_distribution_map) const;
+  void smooth_angular_distribution_map(AngularDistribution3DMap& angular_distribution_map) const;
 
   /*
    * @brief  Obtain the directions from angular distribution peaks

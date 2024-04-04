@@ -8,10 +8,6 @@ namespace kaon_reconstruction
   {
   }
   
-  void HitSplitAlg::fillHistAngularDistributionMap3DCheat( std::vector<art::Ptr<recob::SpacePoint>>& sp_from_recoobj,
-							   Vector3 Kend_candidate,
-							   std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_map_3D_cheat,
-							   std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D);
   
   void AngularDistributionDrawer::fill_angular_distribution_map_cheated_pdg(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistribution3DCheatPDGMap& angular_distribution_map_cheated_pdg, std::map<int, TH2D*> &h_angular_distribution_cheated_pdg) const
   {

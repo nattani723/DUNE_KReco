@@ -50,7 +50,7 @@ namespace kaon_reconstruction
 
   //-----------------------------------------------------------------------------
 
-  void ParticleDirectionFinder::fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3& k_end, AngularDistributionMap3D& angular_distribution_map) const
+  void ParticleDirectionFinder::fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3& k_end, AngularDistribution3DMap& angular_distribution_map) const
   {
 
     const TVector3 x_axis(1.,0.,0.);
@@ -76,7 +76,7 @@ namespace kaon_reconstruction
 
   //-----------------------------------------------------------------------------
 
-  void ParticleDirectionFinder::smooth_angular_distribution_map(AngularDistributionMap3D& angular_distribution_map) const
+  void ParticleDirectionFinder::smooth_angular_distribution_map(AngularDistribution3DMap& angular_distribution_map) const
   {
 
     //const int loop_min = (-1) * (m_smoothing_window - 1) / 2;
@@ -84,7 +84,7 @@ namespace kaon_reconstruction
     const int loop_min = (-1) * m_smoothing_window;
     const int loop_max = m_smoothing_window;
 
-    AngularDistributionMap3D angular_distribution_map_temp( angular_distribution_map );
+    AngularDistribution3DMap angular_distribution_map_temp( angular_distribution_map );
     angular_distribution_map_temp.clear();
 
 
@@ -207,5 +207,5 @@ namespace kaon_reconstruction
   }
 
 } // namespace kaon_reconstruction
-
+#endif
 
