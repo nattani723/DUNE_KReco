@@ -305,6 +305,18 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-  double TrackHitCollector::get_closest_distance(const TVector3& hit_position, const vector<TVector3>& test_positions) const;
+  double TrackHitCollector::get_closest_distance(const TVector3& hit_position, const vector<TVector3>& test_positions) const
+  {
+
+    double closest_distance_squared(std::numeric_limits<double>::max());
+
+    for(TVector3 test_position : test_positions){
+
+      const double separation_squared = (test_position - position).Mag2();
+      if (separation_squared < closest_distance_sqaured) closest_distance_squared = separation_squared; 
+
+    }
+    return std::sqrt(closest_distance_squared);
+  }
 
 } // namespace kaon_reconstruction
