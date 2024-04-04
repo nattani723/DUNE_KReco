@@ -106,6 +106,17 @@ namespace kaon_reconstruction
 
     bool collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list, float& distance_to_line, float& hit_connection_distance) const;
 
+
+    /**
+     *  @brief  Sort the list of sp by distance from 2nd parameter
+     *
+     *  @param  sp_list: spacepoint list
+     *  @param  pandora_sort_position: take the distance between sp in list and this position
+     *
+     */
+
+    void sort_sp_by_distance(SPList& sp_list, const pandora::CartesianVector& pandora_sort_position) const;
+
     /**
      *  @brief  Determine whether a hit lies close to the track projection
      *

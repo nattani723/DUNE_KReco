@@ -217,7 +217,7 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
     
     extrapolated_end_position = extrapolated_start_position + (extrapolated_direction * m_growing_fit_segment_length);
 
-    hits_collected = this->collect_subsection_hits(extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_list, running_fit_position_vector, pandora_running_fit_position_vector, unavailable_hit_list, track_hit_list);
+    // hits_collected = this->collect_subsection_hits(extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_list, running_fit_position_vector, pandora_running_fit_position_vector, unavailable_hit_list, track_hit_list);
     
   }
 
@@ -225,8 +225,62 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 
   //------------------------------------------------------------------------------------------------------------------------------------------    
 
-bool TrackHitCollector::collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit. const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list, float& distance_to_line, float& hit_connection_distance)) const;
+  bool TrackHitCollector::collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit. const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list, float& distance_to_line, float& hit_connection_distance) const
+  {
 
+    float extrapolated_start_l, extrapolated_start_t1, extrapolated_start_t2;
+    float extrapolated_end_l, extrapolated_end_t1, extrapolated_end_t2;
+
+    pandora::CartesianVector pandora_extrapolated_start_position(extrapolated_start_position.X(), extrapolated_start_position.Y(), extrapolated_start_position.Z());
+    pandora::CartesianVector pandora_extrapolated_end_position(extrapolated_end_position.X(), extrapolated_end_position.Y(), extrapolated_end_position.Z());
+
+    extrapolated_fit.GetLocalPosition(pandora_extrapolated_start_position, extrapolated_start_l, extrapolated_start_t1, extrapolated_start_t2);
+    extrapolated_fit.GetLocalPosition(pandora_extrapolated_end_position, extrapolated_end_l, extrapolated_end_t1, extrapolated_end_t2); 
+
+    HitList collected_hit_list;
+    this->sort_sp_by_distance(sp_list, pandora_extrapolated_start_position);
+
+
+  }
+
+
+  //------------------------------------------------------------------------------------------------------------------------------------------
+
+  void TrackHitCollector::sort_sp_by_distance(SPList& sp_list, const pandora::CartesianVector& pandora_sort_position) const
+  {
+
+    // SP and hit positions are confusing, better rename to make it consistent
+
+    pandora::CartesianPointVector pandora_hit_position_vec;
+
+    for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp)　{
+
+      const TVector3 hit_position = (*it_sp)->XYZ();
+      pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
+      pandora_hit_position_vec.push_back(pandora_hit_position);
+
+    }
+
+    lar_content::LArConnectionPathwayHelper::SortByDistanceToPoint sort_start(pandora_sort_position);
+    std::sort(pandora_hit_position_vec.begin(), pandora_hit_position_vec.end(), sort_start);
+
+    std::vector<art::Ptr<recob::SpacePoint>> sp_list_sorted;
+    for(size_t i_hit=0; i_hit<pandora_hit_position_vec.size(); i_hit++) { 
+
+      TVector3 sorted_position;
+      sorted_position.SetXYZ(pandora_hit_position_vec[i_hit].GetX(), pandora_hit_position_vec[i_hit].GetY(), pandora_hit_position_vec[i_hit].GetZ());
+      
+      for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp) {
+	const TVector3 hit_position = (*it_sp)->XYZ();
+	if(sort_position == hit_position) {
+	  sp_list_sorted.push_back(*it_sp);
+	  break;
+	}
+      }
+    }
+    sp_list = sp_list_sorted;
+    
+  }
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
