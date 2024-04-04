@@ -48,6 +48,7 @@ namespace kaon_reconstruction
 
     const float sliding_fit_pitch = wirePitchW;
 
+    return sliding_fit_pitch;
   }
 
   //------------------------------------------------------------------------------------------------------------------------------------------
@@ -98,10 +99,97 @@ namespace kaon_reconstruction
     }
 
 
+    // Perform a running fit to collect a pathway of hits
+    unsigned int count = 0;
+    bool hits_collected = true;
+    bool is_end_downstream = false;
+    if(initial_direction.Z() > 0.) is_end_downstream = true;
+
+    TVector3 extrapolated_direction = peak_direction;
+    TVector3 extrapolated_start_position = k_end;
+    TVector3 extrapolated_end_position = extrapolated_start_position + (extrapolated_direction * highest_l); 
+    pandora::CartesianVector pandora_extrapolated_end_position(extrapolated_end_position.X(), extrapolated_end_position.Y(), extrapolated_end_position.Z());
+
+    const float sliding_fit_pitch = get_wire_pitch();
+
+    // do we need to sort pandora_running_fit_position by vertex position?
+
+    while (hits_collected){
+
+      ++count;
+      const int excess_hits_in_fit = pandora_running_fit_position_vec.size() - m_max_fitting_hits;
+
+      // Remove furthest away hits
+      if(excess_hits_in_fit>0){
+
+	// sort running_fit_position_vec and pandora_fit_position_vec
+	// is there a better way to do this?
+
+	lar_content::LArConnectionPathwayHelper::SortByDistanceToPoint sort_end(pandora_extrapolated_end_position); 
+	std::sort(pandora_running_fit_position_vec.begin(), pandora_running_fit_position_vec.end(), sort_end);
+
+	for (int i = 0; i < excess_hits_in_fit; ++i){
+	  pandora_running_fit_position_vec.erase(std::prev(pandora_running_fit_position_vec.end())); 
+	}
+
+	running_fit_position_vec.clear();
+	TVector3 hit_position_tmp;
+	for(auto pandora_running_fit_position : pandora_running_fit_position_vec){
+	  hit_position_tmp.SetXYZ(pandora_running_fit_position.GetX(), pandora_running_fit_position.GetY(), pandora_running_fit_position.GetZ());
+	  running_fit_position_vec.push_back(hit_position_tmp);
+	}
+	
+      }
+
+      const lar_content::ThreeDSlidingFitResult extrapolated_fit(&pandora_running_fit_position_vec, m_macro_sliding_fit_window, sliding_fit_pitch); 
+
+      // apply nominal fit
+      this->update_extrapolation(count, extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream);
+      
+      hits_collected = this->collect_subsection_hits(extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_list, running_fit_position_vector, pandora_running_fit_position_vector, unavailable_hit_list, track_hit_list);
+
+    }
+
 
   }
 
  
+  //------------------------------------------------------------------------------------------------------------------------------------------    
+
+  void TrackHitCollector::update_extrapolation(int count, const lar_content::ThreeDSlidingFitResult& extrapolated_fit, const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const
+  {
+
+    /*
+    extrapolated_start_position = count == 1 ? extrapolated_end_position
+      : is_end_downstream ? extrapolated_fit.GetGlobalMaxLayerPosition()()
+      : extrapolated_fit.GetGlobalMinLayerPosition()();
+    
+    extrapolated_direction = is_end_downstream ? extrapolated_fit.GetGlobalMaxLayerDirection()()
+      : extrapolated_fit.GetGlobalMinLayerPosition() * (-1.f);
+    */
+
+    if (count == 1) {
+      extrapolated_start_position = extrapolated_end_position;
+    } else if (is_end_downstream) {
+      extrapolated_start_position = extrapolated_fit.get_global_max_layer_position();
+    } else {
+      extrapolated_start_position = extrapolated_fit.get_global_min_layer_position();
+    }
+
+    if (is_end_downstream) {
+      extrapolated_direction = extrapolated_fit.get_global_max_layer_direction();
+    } else {
+      extrapolated_direction = extrapolated_fit.get_global_min_layer_direction() * (-1.f);
+    }
+    
+    extrapolated_end_position = extrapolated_start_position + (extrapolated_direction * m_growing_fit_segment_length);
+
+    hits_collected = this->collect_subsection_hits(extrapolated_fit, extrapolated_start_position, extrapolated_end_position, extrapolated_direction, is_end_downstream, sp_list, running_fit_position_vector, pandora_running_fit_position_vector, unavailable_hit_list, track_hit_list);
+    
+  }
+
+
+
   //------------------------------------------------------------------------------------------------------------------------------------------    
 
   bool TrackHitCollector::collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit. const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list) const;
