@@ -228,8 +228,8 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
   bool TrackHitCollector::collect_subsection_hits(const lar_content::ThreeDSlidingFitResult& extrapolated_fit. const TVector3& extrapolated_start_position, const TVector3& extrapolated_end_position, const TVector3& extrapolated_direction, const bool is_end_downstream, const SPList& sp_list, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& unavailable_hit_list, HitList& track_hit_list, float& distance_to_line, float& hit_connection_distance) const
   {
 
-    float extrapolated_start_l, extrapolated_start_t1, extrapolated_start_t2;
-    float extrapolated_end_l, extrapolated_end_t1, extrapolated_end_t2;
+    float extrapolated_start_l(0.f), extrapolated_start_t1(0.f), extrapolated_start_t2(0.f);
+    float extrapolated_end_l(0.f), extrapolated_end_t1(0.f), extrapolated_end_t2(0.f);
 
     pandora::CartesianVector pandora_extrapolated_start_position(extrapolated_start_position.X(), extrapolated_start_position.Y(), extrapolated_start_position.Z());
     pandora::CartesianVector pandora_extrapolated_end_position(extrapolated_end_position.X(), extrapolated_end_position.Y(), extrapolated_end_position.Z());
@@ -238,8 +238,31 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
     extrapolated_fit.GetLocalPosition(pandora_extrapolated_end_position, extrapolated_end_l, extrapolated_end_t1, extrapolated_end_t2); 
 
     HitList collected_hit_list;
-    this->sort_sp_by_distance(sp_list, pandora_extrapolated_start_position);
+    this->sort_sp_by_distance(sp_list, extrapolated_start_position);
 
+    for(auto it_sp = sp_list.begin(); it_sp != sp_list.end(); ++it_sp) {
+
+      float hit_l(0.f), hit_t1(0.f), hit_t2(0.f);
+      const TVector3 hit_position = (*it_sp)->XYZ();
+      pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());
+      extrapolated_fit.GetLocalPosition(pandora_hit_position, hit_l, hit_t1, hit_t2);
+      
+      // Assess whether hit is within section boundaries
+      if(is_end_downstream && ((hit_l < extrapolated_start_l) || (hit_l > extrapolated_end_l))) continue;
+      if(!is_end_downstream && ((hit_l > extrapolated_start_l) || (hit_l < extrapolated_end_l))) continue;
+
+      // Assess whether hit is close to connecting line
+      if (this->is_close_to_line(hit_position, extrapolated_start_position, extrapolated_direction, m_distance_to_line))
+	collected_hit_list.push_back(fSpacePointsToHits.at(*it_sp));
+
+    }
+
+    // Now find a continuous path of collected hits
+    const int n_initial_hits(track_hit_list.size());
+    this->collect_connected_hits(collected_hit_list, extrapolated_start_position, extrapolated_direction, running_fit_position_vec, pandora_running_fit_position_vec, track_hit_list);
+    const int n_final_hits(track_hit_list.size());
+
+    return (n_final_hits != n_initial_hits); 
 
   }
 
@@ -256,8 +279,8 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 		const TVector3 position1 = sp1->XYZ();
 		const TVector3 position2 = sp2->XYZ();
 
-		double distance1 = (position1 - sort_position).GetMagnitudeSquared();
-		double distance2 = (position2 - sort_position).GetMagnitudeSquared();
+		double distance1 = (position1 - sort_position).Mag();
+		double distance2 = (position2 - sort_position).Mag();
 
 		return distance1 < distance2;
               });
@@ -265,11 +288,20 @@ void TrackHitCollector::update_extrapolation(int count, const lar_content::Three
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-  bool TrackHitCollector::is_close_to_line(const TVector3& hit_position, const TVector3& line_start, const TVector3& line_direction, const double& distance_to_line) const;
+  bool TrackHitCollector::is_close_to_line(const TVector3& hit_position, const TVector3& line_start, const TVector3& line_direction, const double& distance_to_line) const
+  {
+    const double transverse_distance_from_line = line_direction.Cross(hit_position - line_start).Mag();
+    if(transverse_distance_from_line > distance_to_line)
+      return false;
+    else true;
+  }
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-  void TrackHitCollector::collect_connected_hits(HitList& collected_hit_list, const TVector3& extrapolated_start_position, const TVector3& extrapolated_direction, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& track_hit_list) const;
+  void TrackHitCollector::collect_connected_hits(HitList& collected_hit_list, const TVector3& extrapolated_start_position, const TVector3& extrapolated_direction, TVector3& running_fit_position_vector, pandora::CartesianPointVector& pandora_running_fit_position_vector, HitList& track_hit_list) const
+  {
+
+  }
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
