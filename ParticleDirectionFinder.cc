@@ -18,8 +18,19 @@ namespace kaon_reconstruction
   {
   }
 
+
   //------------------------------------------------------------------------------------------------------------------------------------------
 
+  float ParticleDirectionFinder::get_theta_bin_size() const {
+    return m_theta_bin_size();
+  }
+  
+  float ParticleDirectionFinder::get_phi_bin_size() const {
+    return m_phi_bin_size();
+  }
+  
+
+  //------------------------------------------------------------------------------------------------------------------------------------------
 
   void ParticleDirectionFinder::collect_sp_in_roi(const SPList& sp_list, const TVector3& k_end, double& region_of_interest, SPList& sp_list_roi) const
   {
@@ -51,7 +62,7 @@ namespace kaon_reconstruction
 
       double theta = distance_vector.Theta();
       double phi = distance_vector.Phi();
-      int theta_factor = (int)(std::floor(theta / m_theta_nin_size));
+      int theta_factor = (int)(std::floor(theta / m_theta_bin_size));
       int phi_factor = (int)(std::floor(phi / m_phi_bin_size));
 
       if( angular_distribution_map.find(theta_factor) == angular_distribution_map.end() &&
