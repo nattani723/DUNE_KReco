@@ -108,6 +108,17 @@ namespace kaon_reconstruction
     double get_closest_distance(const TVector3& hit_position, const vector<TVector3>& test_positions) const;
 
 
+    unsigned int m_hit_threshold_for_track;           ///< The hit threshold for a significant track
+    float m_growing_fit_initial_length;               ///< The first step distance
+    float m_initial_fit_distance_to_line;              ///< The max. proximity to the track projection for collection in the first step
+    unsigned int m_min_initial_hits_found;            ///< The min. number of hits collected in the first step for continuation
+    unsigned int m_max_fitting_hits;                 ///< The number of hits to consider in the running fit
+    unsigned int m_local_sliding_fit_window;          ///< The standard sliding fit window for track fits
+    float m_growing_fit_segment_length;               ///< The standard step distance
+    unsigned int m_high_resolution_sliding_fit_window; ///< The high resolution sliding fit window for track fits
+    float m_distance_to_line;                        ///< The max. proximity to the spine projection for collection
+    float m_hit_connection_distance;                 ///< The max. separation between connected hits
+
   } // end of class
   
 } // namespace kaon_reconstruction 
