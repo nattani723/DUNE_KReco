@@ -23,7 +23,7 @@ namespace kaon_reconstruction
   }
 
   //------------------------------------------------------------------------------------------------------------------------------------------ 
-
+  /*
   const double TrackHitCollocter::get_wire_pitch()
   {
 
@@ -53,6 +53,7 @@ namespace kaon_reconstruction
 
     return sliding_fit_pitch;
   }
+  */
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -113,7 +114,7 @@ namespace kaon_reconstruction
     TVector3 extrapolated_end_position = extrapolated_start_position + (extrapolated_direction * highest_l); 
     pandora::CartesianVector pandora_extrapolated_end_position(extrapolated_end_position.X(), extrapolated_end_position.Y(), extrapolated_end_position.Z());
 
-    const float sliding_fit_pitch = get_wire_pitch();
+    const float sliding_fit_pitch = TrackUtilities::get_wire_pitch();
 
     // do we need to sort pandora_running_fit_position by vertex position?
 
