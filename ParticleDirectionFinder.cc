@@ -207,5 +207,4 @@ namespace kaon_reconstruction
   }
 
 } // namespace kaon_reconstruction
-#endif
 
