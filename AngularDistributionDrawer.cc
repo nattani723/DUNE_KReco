@@ -25,7 +25,7 @@ namespace kaon_reconstruction
       int phi_factor = (int)(std::floor(phi / m_phi_bin_size));
 
       // retrieve PDG info
-      art::Ptr<recob::Hit> hit = fSpacePointsToHits_old.at(*spIter);
+      art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(*spIter);
       truthHitMatcher(hit, particletmp);
       int pdg = particletmp->PdgCode();
 
