@@ -2,7 +2,7 @@
 
 namespace kaon_reconstruction
 {
-  AngularDistributionDrawer::AngularDistributionDrawer() :
+  AngularDistributionDrawer::AngularDistributionDrawer(const ParticleDirectionFinder particle_direction_finder) :
     m_num_bin_theta(static_cast<int>(M_PI / particle_direction_finder.get_theta_bin_size())),
     m_num_bin_phi(static_cast<int>(2*M_PI / particle_direction_finder.get_phi_bin_size()))
   {
