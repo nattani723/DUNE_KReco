@@ -17,10 +17,24 @@ namespace kaon_reconstruction
     m_growing_fit_segment_length(5.f),
     m_high_resolution_sliding_fit_window(5),
     m_distance_to_line(1.f),
-    m_hit_connection_distance(1.f).
+    m_hit_connection_distance(1.f),
     m_trackall_sliding_fit_window(5)
   {
   }
+
+    pandora::StatusCode Run(const TVector3& k_end, const SPList& sp_list,
+        const TVector3& peak_direction, HitList& unavailable_hit_list, HitList& track_hit_list)
+{
+
+    this->find_track_hits(sp_list, unavailable_hit_list, track_hit_list, k_end, peak_direction);
+
+    // Demand that spine is significant, be lenient here as some have small stubs and a gap
+    if (track_hit_list.size() < m_hit_threshold_for_track)
+        return STATUS_CODE_NOT_FOUND;
+
+    return STATUS_CODE_SUCCESS;
+
+}
 
   //------------------------------------------------------------------------------------------------------------------------------------------ 
   /*
@@ -184,6 +198,7 @@ namespace kaon_reconstruction
 	track_hit_list.clear();
 	return;
       }
+	    
     }
 
 
