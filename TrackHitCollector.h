@@ -62,7 +62,9 @@ namespace kaon_reconstruction
   public:
     TrackHitCollector();
 
-    
+    pandora::StatusCode Run(const TVector3& k_end, const SPList& sp_list,
+        const TVector3& peak_direction, HitList& unavailable_hit_list, HitList& track_hit_list);
+
   private:
 
     typdef std::vector<art::Ptr<recob::SpacePoint>> SPList;
