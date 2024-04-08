@@ -35,9 +35,9 @@ namespace kaon_reconstruction
   public:
 
     ParticleDirectionFinder();
-    
+
+    pandora::STATUSCODE Run(const SPList& sp_list, const Reco::Track k_track,  HitList& unavailable_hit_list, vector<TVector3> &peak_direction_vector);
     float get_theta_bin_size() const;
-    
     float get_phi_bin_size() const;    
 
     
@@ -68,7 +68,7 @@ namespace kaon_reconstruction
    */
 
   //void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistribution3DMap& AngularDistributionMap) const;
-  void fill_angular_distribution_map(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistribution3DMap& angular_distribution_map) const;
+  void fill_angular_distribution_map(const SPList& sp_list_roi, const TVector3 k_end, AngularDistribution3DMap& angular_distribution_map) const;
 
   /*
    * @brief  Smooth out the angular distribution map
@@ -100,8 +100,8 @@ namespace kaon_reconstruction
 
   void refine_peak_directions(const std::map<double, TVector3, std::greater<>>& sort_peak_direction_map, vector<TVector3> &peak_direction_vector) const;
 
-
-  //int m_peak_search_region;
+  float m_region_of_interest;
+  float m_peak_search_region;
   float m_theta_bin_size;
   float m_phi_bin_size;
   int m_smoothing_window;
