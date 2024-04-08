@@ -6,8 +6,9 @@ namespace kaon_reconstruction
 {
   
   ParticleDirectionFinder::ParticleDirectionFinder() :
-      
-    //m_peak_searh_region(15.),
+
+    m_region_of_interest(100.),
+    m_peak_searh_region(15.),
     m_theta_bin_size(0.06),
     m_phi_bin_size(0.06),
     m_smoothing_window(1),
@@ -28,7 +29,54 @@ namespace kaon_reconstruction
   float ParticleDirectionFinder::get_phi_bin_size() const {
     return m_phi_bin_size();
   }
-  
+
+  //------------------------------------------------------------------------------------------------------------------------------------------
+
+pandora::STATUSCODE ParticleDirectionFinder::Run(const SPList& sp_list, const Reco::Track k_track,  HitList& unavailable_hit_list, vector<TVector3> &peak_direction_vector)
+{
+	// get sp list inside region of interest
+	SPList sp_list_roi;
+	this->collect_sp_in_roi(sp_list, k_end, m_region_of_interest, sp_list_roi);
+	
+	if (sp_list_roi.empty())
+		return STATUS_CODE_NOT_FOUND;
+	
+	//get coordinates of k track end and store Hunavailable_hit_list
+	//
+	//
+
+	// get sp list for peak finder
+	SPList sp_list_peak_search;
+	this->collect_sp_in_roi(sp_roi, k_end, m_peak_search_region, sp_list_peak_search);
+		
+	if (sp_list_peak_search.empty())
+        	return STATUS_CODE_NOT_FOUND;
+
+	// Fill angular distribution map
+	AngularDistribution3DMap angular_distribution_map;
+	this->fill_angular_distribution_map(sp_list_roi, k_end, angular_distribution_map);
+
+	if (angular_distribution_map.empty())
+		return STATUS_CODE_NOT_FOUND;
+
+	// Smooth angular decomposition map
+	this->smooth_angular_distribution_map(angular_distribution_map);
+
+	// Store peaks into map from highest to lowest
+	std::map<double, TVector3, std::greater<>> sort_peak_direction_map;
+	this->retrieve_peak_directions(angular_distribution_map, sort_peak_direction_map);
+
+	if(sort_peak_direction_map.empty())
+		return STATUS_CODE_NOT_FOUND;
+
+	// Get vector of peak directions
+	this->refine_peak_directions(sort_peak_direction_map, peak_direction_vector);
+
+	if(peak_direction_vector.empty())
+		return STATUS_CODE_NOT_FOUND;
+
+	return STATUS_CODE_SUCCESS;
+}
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
