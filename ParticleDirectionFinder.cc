@@ -32,7 +32,7 @@ namespace kaon_reconstruction
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::STATUSCODE ParticleDirectionFinder::Run(const SPList& sp_list, const Reco::Track k_track,  HitList& unavailable_hit_list, vector<TVector3> &peak_direction_vector)
+pandora::STATUSCODE ParticleDirectionFinder::Run(const SPList& sp_list, const art::Ptr<recob::Track> k_track,  const HitList& unavailable_hit_list, vector<TVector3> &peak_direction_vector)
 {
 	// get sp list inside region of interest
 	SPList sp_list_roi;
@@ -41,9 +41,8 @@ pandora::STATUSCODE ParticleDirectionFinder::Run(const SPList& sp_list, const Re
 	if (sp_list_roi.empty())
 		return STATUS_CODE_NOT_FOUND;
 	
-	//get coordinates of k track end and store Hunavailable_hit_list
-	//
-	//
+	//get coordinates of k track end and store unavailable_hit_list
+	TVector3 k_end(track->End().x(), track->End().y(), track->End().z());
 
 	// get sp list for peak finder
 	SPList sp_list_peak_search;
