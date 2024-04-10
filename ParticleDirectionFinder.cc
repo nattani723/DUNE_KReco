@@ -22,27 +22,28 @@ namespace kaon_reconstruction
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
-  float ParticleDirectionFinder::get_theta_bin_size() const {
-    return m_theta_bin_size();
-  }
+  float ParticleDirectionFinder::get_theta_bin_size() const { return m_theta_bin_size(); }
   
-  float ParticleDirectionFinder::get_phi_bin_size() const {
-    return m_phi_bin_size();
-  }
+  float ParticleDirectionFinder::get_phi_bin_size() const { return m_phi_bin_size(); }
+
+  const ParticleDirectionFinder::SPList& get_sp_list_roi() const { return sp_list_roi; }
+
+  const ParticleDirectionFinder::TVector3& get_k_end() const { return k_end; }
 
   //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::STATUSCODE ParticleDirectionFinder::Run(const SPList& sp_list, const art::Ptr<recob::Track> k_track,  const HitList& unavailable_hit_list, vector<TVector3> &peak_direction_vector)
 {
 	// get sp list inside region of interest
-	SPList sp_list_roi;
+	//SPList sp_list_roi;
 	this->collect_sp_in_roi(sp_list, k_end, m_region_of_interest, sp_list_roi);
 	
 	if (sp_list_roi.empty())
 		return STATUS_CODE_NOT_FOUND;
 	
 	//get coordinates of k track end and store unavailable_hit_list
-	TVector3 k_end(track->End().x(), track->End().y(), track->End().z());
+	//TVector3 
+	k_end(track->End().x(), track->End().y(), track->End().z());
 
 	// get sp list for peak finder
 	SPList sp_list_peak_search;
