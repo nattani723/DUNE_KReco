@@ -28,6 +28,7 @@ namespace kaon_reconstruction
 
   public:
     TrackRebuilder();
+    pandora::STATUSCODE Run(HitList& track_hit_list, const recob::Track& primary_track);
 
   private:
 
