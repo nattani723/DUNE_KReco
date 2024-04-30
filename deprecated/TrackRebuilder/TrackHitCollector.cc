@@ -1,6 +1,6 @@
 #include "TrackHitCollector.h"
-//#include "../CCKaonProducer_module.h" 
-#include "/exp/uboone/app/users/taniuchi/51_pandora/srcs/larpandoracontent/larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
+//#include "../HitSplitAlg_module.h" 
+#include "larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
 
 
 using namespace pandora;
@@ -88,7 +88,7 @@ namespace kaon_reconstruction
     pandora::CartesianPointVector pandora_running_fit_position_vec;
 
     // Iterate through each space point in the list
-    for (const auto& sp : sp_list) {
+    for (auto& sp : sp_list) {
 
       const TVector3 hit_position = sp->XYZ(); 
       pandora::CartesianVector pandora_hit_position(hit_position.X(), hit_position.Y(), hit_position.Z());

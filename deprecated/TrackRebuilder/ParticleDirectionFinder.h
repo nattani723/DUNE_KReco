@@ -9,7 +9,7 @@
 #ifndef PARTICLE_DIRECTION_FINDER
 #define PARTICLE_DIRECTION_FINDER 1
 
-//#include "CCKaonProducer_module.h"
+//#include "../HitSplitAlg_module.h"
 
 #include "TMath.h"
 #include <algorithm>
@@ -20,8 +20,8 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
-#include "art/Framework/Services/Optional/TFileService.h"
-#include "art/Framework/Services/Optional/TFileDirectory.h"
+#include "art_root_io/TFileService.h"
+#include "art_root_io/TFileDirectory.h"
 
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Shower.h"
@@ -33,6 +33,10 @@
 #include "Api/PandoraApi.h"
 #include "Pandora/AlgorithmHeaders.h"
 #include "larpandoracontent/LArContent.h"
+
+#include "lardataobj/RecoBase/Track.h"
+#include "lardataobj/RecoBase/SpacePoint.h"
+
 
 //using namespace pandora;
 //using namespace std;

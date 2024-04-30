@@ -9,6 +9,7 @@
 #define TRACK_HIT_COLLECTOR 1
 
 //#include "../CCKaonProducer_module.h"
+//#include "../HitSplitAlg_module.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
@@ -27,7 +28,7 @@
 #include "larpandoracontent/LArHelpers/LArHitWidthHelper.h"
 #include "larpandoracontent/LArHelpers/LArConnectionPathwayHelper.h"
 #include "larpandoracontent/LArHelpers/LArGeometryHelper.h"
-#include "/exp/uboone/app/users/taniuchi/51_pandora/srcs/larpandoracontent/larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
+#include "larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
 //#include "larpandoracontent/larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
 
 namespace kaon_reconstruction 
