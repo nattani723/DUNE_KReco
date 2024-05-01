@@ -1,108 +1,29 @@
 #ifndef HitSplitAlg_Module
-#define HitSplitAlg_Module
+#define HitSplitAlg_Module 1
 
 
-#include "art/Framework/Core/EDProducer.h"
-#include "lardataobj/RecoBase/TrackHitMeta.h"
 #include "art/Persistency/Common/PtrMaker.h"
 
 #include "larpandoracontent/LArHelpers/LArPfoHelper.h"
 #include "larpandoracontent/LArObjects/LArPfoObjects.h"
+#include "larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
 
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 #include "larpandora/LArPandoraInterface/LArPandoraOutput.h" 
 
-// LArSoft includes
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "lardata/DetectorInfoServices/LArPropertiesService.h"
 #include "lardata/Utilities/GeometryUtilities.h"
-#include "larsim/Simulation/LArG4Parameters.h"
-#include "lardataobj/RecoBase/Track.h"
-#include "lardataobj/RecoBase/Vertex.h"
-#include "lardataobj/RecoBase/Cluster.h"
-#include "lardataobj/RecoBase/Wire.h"
-#include "lardataobj/RecoBase/Hit.h"
-#include "lardataobj/RecoBase/OpFlash.h"
-#include "lardataobj/RecoBase/Shower.h"
-#include "lardataobj/RecoBase/OpHit.h"
-#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
+#include "lardata/Utilities/AssociationUtil.h"
+#include "lardata/ArtDataHelper/MVAReader.h"
+
 #include "larsim/MCCheater/BackTrackerService.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "lardata/DetectorInfoServices/DetectorClocksService.h"
-#include "larreco/Calorimetry/CalorimetryAlg.h"
-#include "lardataobj/AnalysisBase/Calorimetry.h"
-#include "lardataobj/AnalysisBase/ParticleID.h"
-#include "lardata/Utilities/AssociationUtil.h"
-#include "larreco/RecoAlg/TrackMomentumCalculator.h"
-#include "lardataobj/AnalysisBase/T0.h"
-#include "lardata/ArtDataHelper/MVAReader.h"
-// Framework includes
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Principal/Event.h"
-#include "art/Framework/Principal/Handle.h"
-#include "art/Framework/Services/Registry/ServiceHandle.h"
-#include "art_root_io/TFileService.h"
-#include "art/Framework/Core/ModuleMacros.h"
-#include "canvas/Persistency/Common/FindMany.h"
-#include "canvas/Persistency/Common/PtrVector.h"
-#include "canvas/Persistency/Common/Ptr.h"
-#include "canvas/Utilities/InputTag.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "fhiclcpp/ParameterSet.h"
+#include "larsim/Simulation/LArG4Parameters.h"
+#include "larsim/EventWeight/Base/MCEventWeight.h"
 
-// ROOT includes 
-#include "TDirectory.h" 
-
-#include "art_root_io/TFileService.h"
-#include "art/Framework/Core/EDFilter.h"
-#include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
-#include "art/Framework/Principal/Event.h"
-#include "art/Framework/Principal/Handle.h"
-#include "art/Framework/Principal/Run.h"
-#include "art/Framework/Principal/SubRun.h"
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
-#include "art/Framework/Services/Registry/ServiceHandle.h"
-#include "art/Framework/Principal/View.h"
-#include "art/Utilities/make_tool.h"
-
-#include "canvas/Utilities/InputTag.h"
-#include "canvas/Utilities/ensurePointer.h"
-#include "canvas/Persistency/Common/Ptr.h"
-#include "canvas/Persistency/Common/FindMany.h"
-#include "canvas/Persistency/Common/FindManyP.h"
-#include "canvas/Persistency/Common/FindOne.h"
-#include "canvas/Persistency/Common/FindOneP.h"
-#include "canvas/Persistency/Common/PtrVector.h"
-#include "canvas/Persistency/Common/TriggerResults.h"
-#include "canvas/Utilities/InputTag.h"
-
-#include "fhiclcpp/ParameterSet.h"
-#include "fhiclcpp/ParameterSetRegistry.h"
-
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "cetlib_except/exception.h"
-
-#include "lardata/Utilities/AssociationUtil.h"
-#include "lardata/DetectorInfoServices/LArPropertiesService.h"
-#include "lardata/DetectorInfoServices/DetectorClocksService.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
-
-#include "larreco/Calorimetry/CalorimetryAlg.h"
-#include "larreco/RecoAlg/TrajectoryMCSFitter.h"
-#include "larreco/RecoAlg/TrackMomentumCalculator.h"
-
-#include "larcore/Geometry/Geometry.h"
-#include "larcore/CoreUtils/ServiceUtil.h"  
-#include "larcoreobj/SummaryData/POTSummary.h"
-#include "larcoreobj/SimpleTypesAndConstants/PhysicalConstants.h"
-#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
-
-#include "larcorealg/Geometry/GeometryCore.h" 
-
+#include "lardataobj/RecoBase/TrackHitMeta.h"
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardataobj/RecoBase/Cluster.h"
@@ -133,15 +54,58 @@
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RawData/BeamInfo.h"
 #include "lardataobj/RawData/TriggerData.h"
+
+#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
+#include "larcoreobj/SummaryData/POTSummary.h"
+#include "larcoreobj/SimpleTypesAndConstants/PhysicalConstants.h"
 #include "larcoreobj/SummaryData/POTSummary.h"
 
+#include "larcore/Geometry/Geometry.h"
+#include "larcore/CoreUtils/ServiceUtil.h"  
 
+#include "larcorealg/Geometry/GeometryCore.h" 
+
+#include "larreco/Calorimetry/CalorimetryAlg.h"
+#include "larreco/RecoAlg/TrajectoryMCSFitter.h"
+#include "larreco/RecoAlg/TrackMomentumCalculator.h"
 
 #include "larevt/SpaceCharge/SpaceCharge.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
-#include "larsim/EventWeight/Base/MCEventWeight.h"
-#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+
+
+// Framework includes
+
+#include "art_root_io/TFileService.h"
+#include "art/Framework/Core/EDFilter.h"
+#include "art/Framework/Core/EDProducer.h"
+#include "art/Framework/Core/EDAnalyzer.h"
+#include "art/Framework/Core/ModuleMacros.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Principal/Run.h"
+#include "art/Framework/Principal/SubRun.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Principal/View.h"
+#include "art/Utilities/make_tool.h"
+
+#include "canvas/Utilities/InputTag.h"
+#include "canvas/Utilities/ensurePointer.h"
+//#include "canvas/Persistency/Common/Ptr.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "canvas/Persistency/Common/FindMany.h"
+#include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Persistency/Common/FindOne.h"
+#include "canvas/Persistency/Common/FindOneP.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "canvas/Persistency/Common/TriggerResults.h"
+#include "canvas/Utilities/InputTag.h"
+
+#include "fhiclcpp/ParameterSet.h"
+#include "fhiclcpp/ParameterSetRegistry.h"
+
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "cetlib_except/exception.h"
 
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
@@ -149,11 +113,10 @@
 #include "nusimdata/SimulationBase/MCFlux.h"
 #include "nusimdata/SimulationBase/GTruth.h"
 
-#include "nusimdata/SimulationBase/MCTruth.h"
-#include "nusimdata/SimulationBase/MCFlux.h"
-#include "nusimdata/SimulationBase/MCParticle.h"
-
 #include "Pandora/PdgTable.h"
+
+// ROOT includes 
+#include "TDirectory.h" 
 
 #include "TCanvas.h"
 #include "TTree.h"
@@ -176,7 +139,7 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TTree.h>
-#include <TVectorT.h>
+#include <TVector3.h>
 #include <THStack.h>
 #include <TPDF.h>
 #include <TLegend.h>
@@ -214,7 +177,7 @@
 using namespace pandora;
 using namespace std;
 
-namespace HitSplitAlg_module{
+namespace kaon_reconstruction{
   class HitSplitAlg : public art::EDAnalyzer {
   public:
     
@@ -278,6 +241,15 @@ int fillHistAngularDistributionMapCheat3D( std::map<int, std::map<int, std::map<
 					   std::map<int,int>& mrgidpdg,
 					   std::vector<TH2D*>& h_angular_distribution_pfparticle_cheat_3D,
 					   vector<int>& v_pdg);
+
+  void fillHistAngularDistributionMap3DCheat( std::vector<art::Ptr<recob::SpacePoint>>& sp_from_recoobj,
+							   TVector3 Kend_candidate,
+							   std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_map_3D_cheat,
+							   std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D);
+
+   void drawHistAngularDistributionMap3DCheat( std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D,
+						TString outfile_name,
+					       TCanvas* &c);
 
 int fillHistAngularDistributionMap( std::map<int, double>& angular_distribution_map,
 				    vector<TH1D*>& h_angular_distribution_pfparticle,
@@ -425,6 +397,9 @@ bool isCloseToLine(const TVector3 &hit_position,
 		   const TVector3 &line_direction,
 		   const double distance_to_line);
 
+ bool isInsideROI( art::Ptr<recob::SpacePoint> &sp,
+		   TVector3 Kend_candidate);
+
 double getClosestDistance(art::Ptr<recob::Hit>& collected_hit,
 			  art::Ptr<recob::Hit>& shower_spine_hit,
 			  art::FindManyP<recob::SpacePoint>& spacepoint_per_hit);
@@ -511,6 +486,8 @@ private:
 
   // the parameters we'll read from the .fcl
   std::string fHitModuleLabel; //uB: fHitsModuleLabel
+  std::string fHitModuleLabelOLD;
+  std::string fHitSPAssns;
   std::string fTrackModuleLabel;
   std::string fPidModuleLabel; //uB: fPIDLabel
   std::string fCaloModuleLabel; //uB: fCalorimetryModuleLabel
@@ -528,6 +505,7 @@ private:
   double	fMaxPIDAValue;
   double	fMinPIDAValue;
   bool	fSaveMCTree;
+  TCanvas * c = new TCanvas("c", "c", 800, 600);
 
     std::vector<art::Ptr<recob::Hit>> fHits;
     std::vector<art::Ptr<recob::Track>> fTracks;
@@ -603,8 +581,14 @@ private:
     double rebdautracktrue_length[MAX_TRACKS];
     double rebdautracktruedir_length[MAX_TRACKS];
     double rebdautrack_length[MAX_TRACKS][10];
-    double best_peak_theta[MAX_TRACKS][10];
-    double best_peak_phi[MAX_TRACKS][10];
+    double dautrack_pdg[MAX_TRACKS][10];
+    double rebdautrack_pdg[MAX_TRACKS][10];
+    double best_peak_x[MAX_TRACKS][10];
+    double best_peak_y[MAX_TRACKS][10];
+    double best_peak_z[MAX_TRACKS][10];
+    double best_peak_x_true[MAX_TRACKS];
+    double best_peak_y_true[MAX_TRACKS];
+    double best_peak_z_true[MAX_TRACKS];
 
     double track_dir_vtx[MAX_TRACKS][4];
     double track_PIDA[MAX_TRACKS][3];
@@ -616,6 +600,7 @@ private:
     double track_complet[MAX_TRACKS];
     int    track_mcID[MAX_TRACKS];
     int    track_mcPDG[MAX_TRACKS];
+    int    dautrack_mcPDG[MAX_TRACKS][10];
     int    n_track_points[MAX_TRACKS];
     double track_point_xyz[MAX_TRACKS][MAX_CALO_PTS][3];
     int    n_cal_points[MAX_TRACKS];
@@ -709,6 +694,7 @@ private:
     art::ServiceHandle<geo::Geometry> geom;
     calo::CalorimetryAlg fCalorimetryAlg;
 
+    /*
   const double region_of_interest = 20;
   const double theta0XZBinSize = 0.005;
   const int smoothing_window = 3;
@@ -749,6 +735,7 @@ private:
   double distance_to_line = 1;
   double hit_connection_distance = 1;
   double max_fitting_hits = 15;
+    */
   
   };// class HitSplitAlg
   DEFINE_ART_MODULE(HitSplitAlg);

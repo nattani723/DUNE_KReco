@@ -74,7 +74,7 @@ namespace HitSplitAlg_module
 
 
   recob::Track HitSplitAlg::trackRebuid(std::vector<art::Ptr<recob::Hit>>& hit_list,
-                           const recob::Track& track)
+					const recob::Track& track)
     {
       
       //cout << "aaa" << endl;
@@ -116,7 +116,7 @@ namespace HitSplitAlg_module
 	pandora::CartesianVector pandora_hit_position(sp->XYZ()[0], sp->XYZ()[1], sp->XYZ()[2]);
 	//cout << "sp->XYZ()[0]: " << sp->XYZ()[0] << endl;
 	pandora_hit_positions.emplace_back(pandora_hit_position);
-	//}	
+	//}
       }
 
       std::unique_ptr<std::vector<recob::Track>> outputTracks(new std::vector<recob::Track>);
@@ -142,14 +142,14 @@ namespace HitSplitAlg_module
       recob::Track reco_track = outputTracks->at(0);
       return reco_track;
 
-}
+    }
   //}
 
 
 
   recob::Track HitSplitAlg::trackRebuid(std::vector<art::Ptr<recob::Hit>>& hit_list,
-                           art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-                           const recob::Track& track)
+					art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
+					const recob::Track& track)
     {
       
       art::ServiceHandle<geo::Geometry> theGeometry;
