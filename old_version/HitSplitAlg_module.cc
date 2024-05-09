@@ -6,8 +6,53 @@
 
 //header file
 #include "HitSplitAlg_module.h"
-#include "ReconstructionOrchestrator.h"
+#include "HitSplitAlg.h"
+#include "TrackRebuild.h"
 
+
+// LArSoft includes
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/Utilities/GeometryUtilities.h"
+#include "larsim/Simulation/LArG4Parameters.h"
+#include "lardataobj/RecoBase/Track.h"
+#include "lardataobj/RecoBase/Vertex.h"
+#include "lardataobj/RecoBase/Cluster.h"
+#include "lardataobj/RecoBase/Wire.h"
+#include "lardataobj/RecoBase/Hit.h"
+#include "lardataobj/RecoBase/OpFlash.h"
+#include "lardataobj/RecoBase/Shower.h"
+#include "lardataobj/RecoBase/OpHit.h"
+#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
+#include "larsim/MCCheater/BackTrackerService.h"
+#include "larsim/MCCheater/ParticleInventoryService.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "larreco/Calorimetry/CalorimetryAlg.h"
+#include "lardataobj/AnalysisBase/Calorimetry.h"
+#include "lardataobj/AnalysisBase/ParticleID.h"
+#include "lardata/Utilities/AssociationUtil.h"
+#include "larreco/RecoAlg/TrackMomentumCalculator.h"
+#include "lardataobj/AnalysisBase/T0.h"
+#include "lardata/ArtDataHelper/MVAReader.h"
+// Framework includes
+#include "art/Framework/Core/EDAnalyzer.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art_root_io/TFileService.h"
+#include "art/Framework/Core/ModuleMacros.h"
+#include "canvas/Persistency/Common/FindMany.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "canvas/Persistency/Common/Ptr.h"
+#include "canvas/Utilities/InputTag.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "fhiclcpp/ParameterSet.h"
+
+
+// ROOT includes
+#include "TFile.h"
+#include "TTree.h"
+#include "TDirectory.h"
 
 #ifdef __CLING__
 #pragma link C++ class std::vector < std::vector<Float_t> >+;
@@ -18,7 +63,7 @@ using namespace std;
 
 //========================================================================
 
-namespace kaon_reconstruction{
+namespace HitSplitAlg_module{
 
   HitSplitAlg::HitSplitAlg(fhicl::ParameterSet const& parameterSet)
     : EDAnalyzer(parameterSet), fCalorimetryAlg(parameterSet.get< fhicl::ParameterSet >("CalorimetryAlg"))
@@ -90,8 +135,26 @@ namespace kaon_reconstruction{
       if (maxz<world[2]+geo->DetLength(TPCID)/2.)
 	maxz = world[2]+geo->DetLength(TPCID)/2.;
  
+      /*
+    tpc.LocalToWorld(local,world);
+    if (minx>world[0]-geo->DetHalfWidth(i))
+      minx = world[0]-geo->DetHalfWidth(i);
+    if (maxx<world[0]+geo->DetHalfWidth(i))
+      maxx = world[0]+geo->DetHalfWidth(i);
+    if (miny>world[1]-geo->DetHalfHeight(i))
+      miny = world[1]-geo->DetHalfHeight(i);
+    if (maxy<world[1]+geo->DetHalfHeight(i))
+      maxy = world[1]+geo->DetHalfHeight(i);
+    if (minz>world[2]-geo->DetLength(i)/2.)
+      minz = world[2]-geo->DetLength(i)/2.;
+    if (maxz<world[2]+geo->DetLength(i)/2.)
+    maxz = world[2]+geo->DetLength(i)/2.;
+    */
     }
 
+    //if (std::abs(nuvtxx_truth)<360-50&&
+    //  std::abs(nuvtxy_truth)<600-50&&
+    //  nuvtxz_truth>50&&nuvtxz_truth<1394-150){
     minx = -360.;
     maxx = +360.;
     miny = -600.;
@@ -105,6 +168,14 @@ namespace kaon_reconstruction{
     fFidVolYmax = maxy - fFidVolCutY;
     fFidVolZmin = minz + fFidVolCutZ;
     fFidVolZmax = maxz - fFidVolCutZ;
+
+    /*
+      cout<<"Fiducial volume:"<<"\n"
+      <<fFidVolXmin<<"\t< x <\t"<<fFidVolXmax<<"\n"
+      <<fFidVolYmin<<"\t< y <\t"<<fFidVolYmax<<"\n"
+      <<fFidVolZmin<<"\t< z <\t"<<fFidVolZmax<<"\n";
+      cout << "THIS IS MODULE FOR HITSPLIT ALG" << endl;
+    */
 
     art::ServiceHandle<art::TFileService> tfs;
     fEventTree = tfs->make<TTree>("Event", "Event Tree from Sim & Reco");
@@ -153,8 +224,8 @@ namespace kaon_reconstruction{
     fEventTree->Branch("vertex", vertex,"vertex[n_vertices][4]/D");
     fEventTree->Branch("vtx_ID", vtx_ID,"vtx_ID[n_vertices]/I");
     fEventTree->Branch("n_reco_tracks", &n_recoTracks);
-    fEventTree->Branch("n_reco_dautracks", n_recoDauTracks, "n_recoDauTracks[n_reco_tracks]/I");
-    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/I");
+    fEventTree->Branch("n_reco_dautracks", n_recoDauTracks, "n_recoDauTracks[n_reco_tracks]/D");
+    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/D");
     fEventTree->Branch("n_decayVtx", &n_decayVtx);
     fEventTree->Branch("decayVtx", decayVtx,"decayVtx[n_decayVtx][3]/D");  //vertices found using decayID point Alg
     fEventTree->Branch("vtxID_trk", vtxID_trk,"vtxID_trk[n_reco_tracks][10]/I"); //track-vertex association
@@ -170,14 +241,10 @@ namespace kaon_reconstruction{
     fEventTree->Branch("rebdautrack_length", rebdautrack_length,"rebdautrack_length[n_reco_tracks][10]/D");
     fEventTree->Branch("dautrack_pdg", dautrack_pdg,"dautrack_pdg[n_reco_tracks][10]/D");
     fEventTree->Branch("rebdautrack_pdg", rebdautrack_pdg,"rebdautrack_pdg[n_reco_tracks][10]/D");
-
-    fEventTree->Branch("best_peak_x", best_peak_x,"best_peak_x[n_reco_tracks][10]/D");
-    fEventTree->Branch("best_peak_y", best_peak_y,"best_peak_y[n_reco_tracks][10]/D");
-    fEventTree->Branch("best_peak_z", best_peak_z,"best_peak_z[n_reco_tracks][10]/D");
-    fEventTree->Branch("best_peak_x_true", best_peak_x_true,"best_peak_x_true[n_reco_tracks]/D");  
-    fEventTree->Branch("best_peak_y_true", best_peak_y_true,"best_peak_y_true[n_reco_tracks]/D");  
-    fEventTree->Branch("best_peak_z_true", best_peak_z_true,"best_peak_z_true[n_reco_tracks]/D");  
-
+    fEventTree->Branch("best_peak_theta", best_peak_theta,"best_peak_theta[n_reco_tracks][10]/D");
+    fEventTree->Branch("best_peak_phi", best_peak_phi,"best_peak_phi[n_reco_tracks][10]/D");
+    fEventTree->Branch("best_peak_theta_true", best_peak_theta_true,"best_peak_theta_true[n_reco_tracks]/D");
+    fEventTree->Branch("best_peak_phi_true", best_peak_phi_true,"best_peak_phi_true[n_reco_tracks]/D");
     fEventTree->Branch("track_PIDA", track_PIDA,"track_PIDA[n_reco_tracks][3]/D");
     fEventTree->Branch("track_PID_pdg", track_PID_pdg,"track_PID_pdg[n_reco_tracks][3]/I");
     fEventTree->Branch("track_KE", track_KE,"track_KE[n_reco_tracks][3]/D");
@@ -449,8 +516,9 @@ namespace kaon_reconstruction{
     fTracks.clear();
     fShowers.clear();
     fSpacePointsToHits.clear();
+    fSpacePointsToHits_old.clear();
     fHitsToSpacePoints.clear();
-    //fHitsToSpacePoints_recotrack.clear();
+    fHitsToSpacePoints_old.clear();
     fTracksToHits.clear();
     fTracksToSpacePoints.clear();
     fShowersToHits.clear(); 
@@ -505,30 +573,63 @@ namespace kaon_reconstruction{
     // auto hit_to_sp = art::FindManyP<recob::SpacePoint>(hit_handle, event, fHitToSpacePointLabel);
     auto findHitToSPs = art::FindManyP<recob::SpacePoint>(hit_handle, event, fHitSPAssns); 
 
-    std::vector<art::Ptr<recob::SpacePoint>> SpacePointlist_truemu;
-    std::vector<art::Ptr<recob::SpacePoint>> SpacePointlist_truepi;
-    std::map<recob::Hit,int> hit_pdg_map;
-
-
     for (unsigned int iSP = 0; iSP < fSpacePoints.size(); ++iSP) { 
       const art::Ptr<recob::SpacePoint> spacePoint = fSpacePoints.at(iSP);
-      const art::Ptr<recob::Hit> hit = findSPToHits.at(iSP);
-      fSpacePointsToHits[spacePoint] = hit;
-      fHitsToSpacePoints[hit] = spacePoint;
-
-      const simb::MCParticle *particletmp;
-      truthHitMatcher(hit, particletmp);
-
-      if(!particletmp) continue;
-
-      if(particletmp->PdgCode() == 211) SpacePointlist_truepi.push_back(spacePoint);
-      if(particletmp->PdgCode() == -13) SpacePointlist_truemu.push_back(spacePoint);
-
-      hit_pdg_map[(*hit)] = particletmp->PdgCode();
-
+      const art::Ptr<recob::Hit> hit = findSPToHits.at(iSP); 
+      fSpacePointsToHits_old[spacePoint] = hit;
+      fHitsToSpacePoints_old[hit] = spacePoint; 
     }
-
     
+    /*
+    for (unsigned int iHit = 0; iHit < fHits.size(); iHit++){
+      const art::Ptr<recob::Hit> hit = fHits.at(iHit);
+      const std::vector<art::Ptr<recob::SpacePoint> > spacePoints = findHitToSPs_old.at(iHit);
+
+      if(!spacePoints.empty()){
+      //for (unsigned int iSP = 0; iSP < spacePoints.size(); iSP++){ 
+        //const art::Ptr<recob::SpacePoint> spacePoint = spacePoints.at(iSP);
+	  //fSpacePointsToHits[spacePoint] = hit;
+	  //}
+	  if(!fHitsToSpacePoints_old.count(hit))
+	    fHitsToSpacePoints_old[hit] = spacePoints[0];
+      }
+    }
+    */
+
+    for (unsigned int iHit = 0; iHit < hit_list.size(); iHit++) {
+      //const art::Ptr<recob::SpacePoint> spacePoints = find
+      //const art::Ptr<recob::SpacePoint> spacePoints = findHitToSPs.at(iHit);
+      
+      const art::Ptr<recob::Hit> hit = hit_list.at(iHit);
+      const std::vector<art::Ptr<recob::SpacePoint> > spacePoints = findHitToSPs.at(iHit);
+      //auto const hit = hit_list.at(iHit);
+      //auto spacePoints = findHitToSPs.at(iHit);
+
+      //cout << spacePoints << endl;
+      /*
+      if(!fHitsToSpacePoints.count(hit)){
+      cout << "adding this hit" << endl;
+      cout << spacePoints->XYZ()[0] << endl;
+        fHitsToSpacePoints[hit] = spacePoints;
+      }
+      */
+      
+      if(!spacePoints.empty()){
+
+	for (unsigned int iSP = 0; iSP < spacePoints.size(); iSP++){
+	  const art::Ptr<recob::SpacePoint> spacePoint = spacePoints.at(iSP);
+	  fSpacePointsToHits[spacePoint] = hit;
+	}
+	
+	if(!fHitsToSpacePoints.count(hit)){
+	  //cout << "adding this hit" << endl;
+	  //cout << spacePoints[0]->XYZ()[0] << endl;
+	  fHitsToSpacePoints[hit] = spacePoints[0];
+	}
+	//else if(fHitsToSpacePoints.count(hit)>0) cout << "this hit is already stored in the map" << endl;
+      }
+      
+    }
 
     for (unsigned int iTrack = 0; iTrack < fTracks.size(); ++iTrack) {
       const art::Ptr<recob::Track> track = fTracks.at(iTrack); 
@@ -537,18 +638,16 @@ namespace kaon_reconstruction{
 
       for (unsigned int iHit = 0; iHit < trackHits.size(); ++iHit) {
 	const art::Ptr<recob::Hit> hit = trackHits.at(iHit);
-
-	/*
-	if(fHitsToSpacePoints.count(hit))
-	  fHitsToSpacePoints_recotrack[hit] = fHitsToSpacePoints.at(hit);
-	else cout << "this is not included in map!!" << endl;
-	*/
-
 	fTracksToHits[track].push_back(hit);
-	if (fHitsToSpacePoints.count(hit)) {
-	  fTracksToSpacePoints[track].push_back(fHitsToSpacePoints.at(hit));
+	////if (fHitsToSpacePoints.count(hit)) {
+	//cout << "fHitsToSpacePoints.count(hit): " << fHitsToSpacePoints_old.count(hit) << endl;
+	//fTracksToSpacePoints[track].push_back(fHitsToSpacePoints.at(hit));
+	if (fHitsToSpacePoints_old.count(hit)) {
+	  fTracksToSpacePoints[track].push_back(fHitsToSpacePoints_old.at(hit));
+	  //cout << fHitsToSpacePoints_old.at(hit)->XYZ()[0] << endl;
 	}
       }
+      cout << "fTracksToSpacePoints[track].size(): " << fTracksToSpacePoints[track].size() << endl;
     }
 
     for (unsigned int iShower = 0; iShower < fShowers.size(); ++iShower) {
@@ -558,10 +657,11 @@ namespace kaon_reconstruction{
       for (unsigned int iHit = 0; iHit < showerHits.size(); ++iHit) {
 	const art::Ptr<recob::Hit> hit = showerHits.at(iHit);
 	fShowersToHits[shower].push_back(hit);
-	if (fHitsToSpacePoints.count(hit)) {
-	  fShowersToSpacePoints[shower].push_back(fHitsToSpacePoints.at(hit));
+	if (fHitsToSpacePoints_old.count(hit)) {
+	  fShowersToSpacePoints[shower].push_back(fHitsToSpacePoints_old.at(hit));
 	}
       }
+      cout << "fShowersToSpacePoints[shower].size(): " << fShowersToSpacePoints[shower].size() << endl;
     }
 
     /*
@@ -592,14 +692,65 @@ namespace kaon_reconstruction{
       art::fill_ptr_vector(showerlist, showerHandle);
     n_recoShowers= showerlist.size();
     art::FindManyP<recob::Hit> shower_hits(showerHandle, event, fShowerModuleLabel);
+    cout << "shower_hits " << shower_hits.size() << endl;
+
+    cout << "n_recoShowers: " << n_recoShowers << ", n_recoTracks: " << n_recoTracks << endl;
+    cout << "tracklist.size(): " << tracklist.size() << ", showerlist.size(): " << showerlist.size() << endl;
+    for(int i=0; i<n_recoTracks; ++i){
+      cout << "i: " << i << ", track_hits[i].size(): " << track_hits.at(i).size() << endl;
+    }
+    for(int i=0; i<n_recoShowers; ++i){
+      cout << "i: " << i << ", shower_hits[i].size(): " << shower_hits.at(i).size() << endl;
+    }
 
     // loop reco tracks
     for(int i=0; i<n_recoTracks; ++i) {
+      //int nK_primary = 0;
+
+      int ndau_tracks = 0;
+      //int ndau_showers = 0;
+      n_recoDauTracks[i] = 0;
+      n_recoRebDauTracks[i] = 0;
+
+      vector<bool> v_trk_flg_peak;
+      vector<TVector2> best_peak_bins;
+      vector<TVector2> best_peak_bins_truepi;
+      vector<TVector2> best_peak_bins_truemu;
+      std::map<double, TVector2, std::greater<>> view_peak_map;
+      std::map<double, TVector2, std::greater<>> view_peak_map_truepi;
+      std::map<double, TVector2, std::greater<>> view_peak_map_truemu;
+
+      std::map<int, std::map<int, double>> angular_distribution_map_3D_track;
+      std::map<int, std::map<int, double>> angular_distribution_map_3D_shower;
+      std::map<int, std::map<int, double>> angular_distribution_map_3D_pfparticle;
+      std::map<int, std::map<int, double>> angular_distribution_map_3D_truepi;
+      std::map<int, std::map<int, double>> angular_distribution_map_3D_truemu;
+      std::vector<art::Ptr<recob::Hit>> unavailable_hit_list;
+      std::vector<art::Ptr<recob::Hit>> shower_spine_hit_list;
+      std::vector<std::vector<art::Ptr<recob::Hit>>> shower_spine_hit_list_vector;
+      std::vector<std::vector<art::Ptr<recob::Hit>>> shower_spine_hit_list_vector_truepi;
+      std::vector<std::vector<art::Ptr<recob::Hit>>> shower_spine_hit_list_vector_truemu;
+      std::vector<std::vector<art::Ptr<recob::Hit>>> shower_spine_hit_list_vector_truepidir;
+      std::vector<std::vector<art::Ptr<recob::Hit>>> shower_spine_hit_list_vector_truemudir;
+      std::vector<art::Ptr<recob::Hit>> hits_from_reco_obj;
+      std::vector<art::Ptr<recob::SpacePoint>> sp_from_recoobj;
+      std::vector<art::Ptr<recob::SpacePoint>> sp_from_truemu;
+      std::vector<art::Ptr<recob::SpacePoint>> sp_from_truepi;
+      std::vector<art::Ptr<recob::SpacePoint>> sp_from_allhits;
+      std::vector<art::Ptr<recob::SpacePoint>> sp_from_allhits_old;
+
+      std::map<int, std::map<int, std::map<int, double>>> angular_distribution_map_3D_cheat;
+      std::map<int, TH2D*> h_angular_distribution_pfparticle_cheat_3D;
+      //TCanvas * c = new TCanvas("c", "c", 800, 600);
 
       art::Ptr<recob::Track> track = tracklist[i];
-      n_recoRebDauTracks[i] = 0;
-      n_recoDauTracks[i] = 0;
-
+      /*
+	const std::vector<art::Ptr<recob::SpacePoint>>& sp = fTracksToSpacePoints.at(track);
+       for (auto spIter = sp.begin(); spIter != sp.end(); ++spIter) {
+        TVector3 point = (*spIter)->XYZ();
+	cout << "X(): " << point.X() << endl;
+       }
+      */
       //vtx associations
       std::vector<art::Ptr<recob::Vertex>> vtxs = trk_from_vtx.at(i);
       for( size_t j=0; j<vtxs.size(); ++j){
@@ -630,43 +781,151 @@ namespace kaon_reconstruction{
       track_vtxDir[i][1] = tmp_vtx_dir[1];
       track_vtxDir[i][2] = tmp_vtx_dir[2];
 
+      /* import from uB code*/
+      const recob::Track& atrack = *track;
+
       TVector3 end(track->End().x(),
 		   track->End().y(),
 		   track->End().z());
+       
+       
+      // add some conditions to remove NON K+-like tracks?
+      //make the list of candidate hits for daughter reco track 
+      //for (unsigned int ihit = 0; ihit < fHits.size(); ++ihit){
+      //if(!fHits.size()) continue;
+    
+      /*
+       for (unsigned int iHit = 0; iHit < fHits.size(); ++iHit) {
+        const art::Ptr<recob::Hit> hit = fHits.at(iHit); 
+	//cout << "WireID().Wire: " << hit->WireID().Wire << endl;
+	 if(!fHitsToSpacePoints.count(hit)) continue;
+	  art::Ptr<recob::SpacePoint> sp = fHitsToSpacePoints.at(hit);
+	   if(!isInsideROI(sp, end)) continue;
+       }
+      */
+       
+      cout << "fHitsToSpacePoints.size(): " << fHitsToSpacePoints.size() << endl;
+      //for(auto const& hit : fHits){
+      for(auto const& hit : hit_list){
+	//if(!fHitsToSpacePoints.count(hit)) continue;
+	if(fHitsToSpacePoints.find(hit) == fHitsToSpacePoints.end()) continue;
+	//cout << "passed !fHitsToSpacePoints.count(hit)" << endl;
+	art::Ptr<recob::SpacePoint> sp = fHitsToSpacePoints.at(hit);
+	//cout << "get sp" << endl;
+	//the hit is inside ROI
+	if(!isInsideROI(sp, end)) continue;
+	//cout << "passed ROI" << endl;
+	//remove the hits consisting the primary track
 
-      cout << "track_vtx: "  << track_vtx[i][0] << " " << track_vtx[i][1] << " " << track_vtx[i][2]  << endl;
-      cout << "track_end: " << track_end[i][0] << " " << track_end[i][1] << " " << track_end[i][2] << endl;
+	if( std::find(track_hits.at(i).begin(), track_hits.at(i).end(), hit) != track_hits.at(i).end()) continue;
 
-      //truth matcher
-      
-       double tmpEfrac = 0;
-       const simb::MCParticle *particle;
-       double tmpComplet = 0;
-       std::vector<art::Ptr<recob::Hit>> all_trackHits = track_hits.at(i);
-       truthMatcher( all_hits,  all_trackHits, particle, tmpEfrac, tmpComplet );
-       if(!particle) continue;
-       track_mcID[i] = particle->TrackId();
-       track_mcPDG[i] = particle->PdgCode();
-       track_Efrac[i] = tmpEfrac;
-       track_complet[i] = tmpComplet;
-       //cout << "track_mcPDG[i]: " << track_mcPDG[i] << endl;
-       if(track_mcPDG[i]!=321) continue;
-
-       for(int j=0; j<n_recoTracks; ++j) {
+	//cout << sp->XYZ()[0] << ' '<< sp->XYZ()[1] << ' ' << sp->XYZ()[2] << endl; 
+	//cout << "passed primary track filter" << endl;
+	sp_from_allhits.push_back(sp);
+      }
+      cout << "sp_from_allhits.size(): " << sp_from_allhits.size() << endl;
 
 
-	 art::Ptr<recob::Track> dau_track = tracklist[j];
+      cout << '\n';
 
-	 if(dau_track->ID() == track->ID()) continue;
+      for(auto & sp : fSpacePoints){ 
+	//check sp is stored inside SP-Hit map
+	if(fSpacePointsToHits_old.find(sp) == fSpacePointsToHits_old.end()) continue;
 
+	//the hit is inside ROI
+	if(!isInsideROI(sp, end)) continue;
+
+	//skip if sp is a part of primary track
+	std::vector<art::Ptr<recob::SpacePoint>> sp_from_primary = fTracksToSpacePoints[track];
+	if( std::find(sp_from_primary.begin(), sp_from_primary.end(), sp) != sp_from_primary.end()) continue;
+
+	//cout << sp->XYZ()[0] << ' '<< sp->XYZ()[1] << ' ' << sp->XYZ()[2] << endl; 
+
+	sp_from_allhits_old.push_back(sp);
+      }
+      cout << "sp_from_allhits_old.size(): " << sp_from_allhits_old.size() << endl;
+
+      const simb::MCParticle *particletmp;
+      //if(!sp_from_allhits.size()) continue;
+      if(!sp_from_allhits_old.size()) continue;
+      //for(auto const& sp : sp_from_allhits){
+      for(auto const& sp : sp_from_allhits_old){
+	//art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(sp);
+	art::Ptr<recob::Hit> hit = fSpacePointsToHits_old.at(sp);
+	truthHitMatcher(hit, particletmp);
+	if(!particletmp) continue;
+	//if(particle->PdgCode() == 321) ++nK_dautrk;
+	if(particletmp->PdgCode() == 211) sp_from_truepi.push_back(sp);
+	else if(particletmp->PdgCode() == -13) sp_from_truemu.push_back(sp);
+      }       
+
+      //fillAngularDistributionMap3D(sp_from_allhits, end, angular_distribution_map_3D_track); 
+      fillAngularDistributionMap3D(sp_from_allhits_old, end, angular_distribution_map_3D_track); 
+
+
+      // truth match       
+      double tmpEfrac = 0;
+      const simb::MCParticle *particle;
+      double tmpComplet = 0;
+      std::vector<art::Ptr<recob::Hit>> all_trackHits = track_hits.at(i);
+      truthMatcher( all_hits,  all_trackHits, particle, tmpEfrac, tmpComplet );
+      if(!particle) continue;
+      track_mcID[i] = particle->TrackId();
+      track_mcPDG[i] = particle->PdgCode();
+      track_Efrac[i] = tmpEfrac;
+      track_complet[i] = tmpComplet;
+      if(track_mcPDG[i]!=321) continue;
+      /*
+       else{
+       //cout << "THIS IS K+ TRACK" << endl;
+
+       std::vector<art::Ptr<recob::SpacePoint>>& sp_from_track = fTracksToSpacePoints.at(fTracks.at(i));
+
+        const simb::MCParticle *particletmp;
+	 if(!sp_from_track.size()) continue;
+	  for(auto const& sp : sp_from_track){
+	     art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(sp);
+	        truthHitMatcher(hit, particletmp);
+		   if(!particletmp) continue;
+		      //if(particletmp->PdgCode() == 321) ++nK_primary;
+		         ++nK_primary;
+			 //cout << "PDG of this hit consisting K+ track is " << particletmp->PdgCode() << endl;                                          
+			  }
+
+       }
+      */
+
+      // loop over daughter track candidates
+      //int nK_dautrk = 0;
+      cout << "Kaon_BR: " << Kaon_BR << ", MC_dautruthlength: " << MC_dautruthlength << endl;
+
+      for(int j=0; j<n_recoTracks; ++j) {
+	//nK_dautrk = 0;
+
+	art::Ptr<recob::Track> dau_track = tracklist[j];
+	//const recob::Track& adau_track = *dau_track;
+
+	// exclude the track itself
+	//cout << "track->ID(): " << track->ID() << ", dau_track->ID(): " << dau_track->ID() << endl;
+	if(dau_track->ID() == track->ID()) continue;
+	 
 	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
 						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
 						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
 
-	if(track_dau_distance<15){
+	//cout << "candidate of daughter track" << endl;
 
+	if(track_dau_distance<10){
 	  dautrack_length[i][n_recoDauTracks[i]] = dau_track->Length();
+	  n_recoDauTracks[i]++;
+	  cout << "this event has daughter track" << endl;
+	  cout << "i: " << i << ", j: " << j << ", dau_track->Length(): " << dau_track->Length() << endl;
+
+	  //track_mcID[i] = particle->TrackId(); 
 	  dautrack_mcPDG[i][n_recoDauTracks[i]] = track_mcPDG[j];
+	  cout << "and its PDG is " << track_mcPDG[j] << endl;
+	  //cout << "hits_from_dau_track: " << track_hits.at(j).size() << endl;
+	  //cout << "sp_from_dau_track.size(): " << fTracksToSpacePoints.at(fTracks.at(j)).size() << endl;
 
 	  const simb::MCParticle *mcparticle_dau;
 	  std::map<int,int> hits_pdg_map_dau;
@@ -687,143 +946,365 @@ namespace kaon_reconstruction{
 	    dautrack_pdg[i][n_recoDauTracks[i]] = v[0].second;
 	    cout << "dautrack_pdg[i][n_recoDauTracks[i]]: " << v[0].second << endl;
 	  }
-	  n_recoDauTracks[i]++;
-	}
-
-       }       
-
-      /* imported codes*/
-
-      std::vector<art::Ptr<recob::Hit>> hits_from_track = track_hits.at(i);
-      /*
-      cout << "begin unavailable hit list" << endl;
-      for(art::Ptr<recob::Hit>& hit : hits_from_track) {
-	cout << "a" << endl;
-	auto sp = fHitsToSpacePoints.at(hit);
-	cout << "a" << endl;
-
-	const TVector3 hit_position = sp->XYZ();
-	cout << hit_position.X() << " " << hit_position.Y() << " " << hit_position.Z() << endl;
-      }
-      cout << "end unavailable hit list" << endl;
-      */
-
-      ReconstructionOrchestrator orchestrator;
-      ReconstructionOrchestrator orchestrator_truepi;
-      ReconstructionOrchestrator orchestrator_truemu;
-
-      orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-
-      /*
-      TCanvas *c = (TCanvas*)gROOT->FindObject("c");
-      if (c) {
-	delete c;
-      }
-      c = new TCanvas("c", "Canvas", 800, 600);
-      orchestrator.drawHistograms(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, hit_pdg_map, c);
-      */
-
-      std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
-      std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
-
-	  cout << "Kaon_BR: " << Kaon_BR << endl;
-	  cout << "before loop rebuildTrackList" << endl;
-      for(unsigned int j=0; j < rebuildTrackList.size(); j++) {
-	
-	const std::vector<TVector3> peakDirectionVector = orchestrator.getPeakDirectionList();
-
-	cout << "peakDirectionVector.at(j).X(): " << peakDirectionVector.at(j).X() << endl;
-	best_peak_x[i][j] = peakDirectionVector.at(j).X();
-	best_peak_y[i][j] = peakDirectionVector.at(j).Y();
-	best_peak_z[i][j] = peakDirectionVector.at(j).Z();
-
-	if(trackHitLists[j].empty()) continue;
-
-	rebdautrack_length[i][n_recoRebDauTracks[i]] = rebuildTrackList[j].Length();
-
-	const simb::MCParticle *mcparticle;
-	std::map<int,int> nhits_pdg_map;
-	std::map<recob::Hit,int> hit_pdg_map;
-
-	for(auto const& hit : trackHitLists[j]){
-
-	  truthHitMatcher(hit, mcparticle);
-	  if(!mcparticle){
-	    cout << "THIS HAS NO MCPARTICLE!!!" << endl;
-	    continue;
-	  }
- 
-	  hit_pdg_map[(*hit)] = mcparticle->PdgCode();
-
-	  if(nhits_pdg_map.find(mcparticle->PdgCode()) == nhits_pdg_map.end()) nhits_pdg_map[mcparticle->PdgCode()] = 1;
-	  else nhits_pdg_map[mcparticle->PdgCode()] += 1;
 
 	}
 
-	vector<pair<int, int>> v;
-	if(nhits_pdg_map.size()){
-	  for (map<int, int>::iterator it = nhits_pdg_map.begin(); it != nhits_pdg_map.end(); it++) {
-	    v.push_back({ it->second, it->first });
-	    cout << it->second << " " << it->first << endl;
-	  }
-	  sort(v.rbegin(), v.rend());
-	  rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
+	if(track_dau_distance<20){// consider as a daughter object
+	  //get hits and spacepoints
+	  std::vector<art::Ptr<recob::Hit>> hits_from_dau_track = track_hits.at(j);
+	  //cout << "hits_from_dau_track: " << hits_from_dau_track.size() << endl;
 
+	  std::vector<art::Ptr<recob::SpacePoint>>& sp_from_dau_track = fTracksToSpacePoints.at(fTracks.at(j));
+	  cout << "sp_from_dau_track.size(): " << sp_from_dau_track.size() << endl;
+	  //fillAngularDistributionMap3D(sp_from_dau_track, end, angular_distribution_map_3D_track);
+
+
+	  /*
+	       const simb::MCParticle *particle;
+	       if(sp_from_dau_track.size()) cout << "take sps from candidate recoobj" << endl;
+	          if(!sp_from_dau_track.size()) continue;
+		     for(auto const& sp : sp_from_dau_track){
+		          art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(sp);
+			       truthHitMatcher(hit, particle);
+			            if(!particle) continue;
+				         //if(particle->PdgCode() == 321) ++nK_dautrk;
+					      //++nK_dautrk;
+					           if(particle->PdgCode() == 211) sp_from_truepi.push_back(sp);
+						        else if(particle->PdgCode() == -13) sp_from_truemu.push_back(sp);
+							//cout << "PDG of this daughter track hit is " << particle->PdgCode() << endl;
+							   }
+	  */
+
+	  //art::FindManyP<recob::SpacePoint> spacepoint_per_hit(HitHandle, event, fSpacePointproducer);
+	  //art::FindOneP<recob::SpacePoint> spacepoint_per_hit(HitHandle, event, fSpacePointproducer);
+	  //cout << "spacepoint_per_hit.size() " << spacepoint_per_hit.size() << endl;
+	  sp_from_recoobj.insert(sp_from_recoobj.end(), sp_from_dau_track.begin(), sp_from_dau_track.end());
+	  //hits_from_reco_obj.insert(hits_from_reco_obj.end(), hits_from_dau_track.begin(), hits_from_dau_track.end());
+	  //fillAngularDistributionMap3D(hits_from_dau_track, end, spacepoint_per_hit, angular_distribution_map_3D_track);
+	  //fillAngularDistributionMap3D(hits_from_dau_track, end, spacepoint_per_track, angular_distribution_map_3D_track);
+	  ndau_tracks++;
 	}
 
-	n_recoRebDauTracks[i]++;
+      }// end of track loop
 
-      }
+       // loop over daughter shower candidates
+       //int nK_daushw =0;
 
-      if(Kaon_BR==2){
+       /*
+       for(int j=0; j<n_recoShowers; ++j) {
+        //nK_daushw = 0;
 
-	orchestrator_truepi.runReconstruction(SpacePointlist_truepi, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-	std::vector<recob::Track> rebuildTrackList_truepi = orchestrator_truepi.getRebuildTrackList(); 
+	 art::Ptr<recob::Shower> dau_shower = showerlist[j];
+	 //const recob::Shower& adau_shower = *dau_shower;
 
+	 double shower_dau_distance = TMath::Sqrt((track->End().x()-dau_shower->ShowerStart().X())*(track->End().x()-dau_shower->ShowerStart().X()) +
+	(track->End().y()-dau_shower->ShowerStart().Y())*(track->End().y()-dau_shower->ShowerStart().Y()) + 
+	(track->End().z()-dau_shower->ShowerStart().Z())*(track->End().z()-dau_shower->ShowerStart().Z()) );
+	 if (shower_dau_distance<20){
+      if(ndau_showers>20) break;
+      //get hits and spacepoints
+      std::vector<art::Ptr<recob::Hit>> hits_from_dau_shower = shower_hits.at(j);
 
-	if(!rebuildTrackList_truepi.empty()){
-	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
-	  
-	  std::vector<TVector3> peakDirectionVector =  orchestrator_truepi.getPeakDirectionList();
-	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
-	  
-	  orchestrator_truepi.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
-	  
-	}
-	
-      }
-      
-      if(Kaon_BR==1){
+      std::vector<art::Ptr<recob::SpacePoint>>& sp_from_dau_shower = fShowersToSpacePoints.at(fShowers.at(j));
+      //skip all showers
+      //fillAngularDistributionMap3D(sp_from_dau_shower, end, angular_distribution_map_3D_shower);
 
-	orchestrator_truemu.runReconstruction(SpacePointlist_truemu, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-	std::vector<recob::Track> rebuildTrackList_truemu = orchestrator_truemu.getRebuildTrackList(); 
-	
-	if(!rebuildTrackList_truemu.empty()){
-	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
-	  
-	  std::vector<TVector3> peakDirectionVector =  orchestrator_truemu.getPeakDirectionList();
-	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
-	  
-	  orchestrator_truemu.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
-	  
-	}
+      const simb::MCParticle *particle;
+      if(!sp_from_dau_shower.size()) continue;
+      for(auto const& sp : sp_from_dau_shower){
+      art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(sp);
+      truthHitMatcher(hit, particle);
+      if(!particle) continue;
+      //if(particle->PdgCode() == 321) ++nK_daushw;
+      //++nK_daushw;
+      //skip
+      //if(particle->PdgCode() == 211) sp_from_truepi.push_back(sp);
+      //else if(particle->PdgCode() == -13) sp_from_truemu.push_back(sp);
+      //cout << "PDG of this daughter shower hit is " << particle->PdgCode() << endl;
+      //else cout << "PDG of this hit is " << particle->PdgCode() << endl;
+    }
+      //skip all showers
+      //sp_from_recoobj.insert(sp_from_recoobj.end(), sp_from_dau_shower.begin(), sp_from_dau_shower.end()); 
 
+      // art::FindManyP<recob::SpacePoint> spacepoint_per_hit(HitHandle, event, fSpacePointproducer);
+      //hits_from_reco_obj.insert(hits_from_reco_obj.end(), hits_from_dau_shower.begin(), hits_from_dau_shower.end());
 
-      }
+      //fillAngularDistributionMap3D(hits_from_dau_shower, end, spacepoint_per_hit, angular_distribution_map_3D_shower);
+      ndau_showers++;
+    }
+
+    }// end of shower loop
+       */
+    
+       /*
+	 cout << "track->ID(): " << track->ID() << endl;
+       const simb::MCParticle *particletmp;
+       for(auto const& sp : sp_from_recoobj){
+        art::Ptr<recob::Hit> hit = fSpacePointsToHits.at(sp);
+	 truthHitMatcher(hit, particletmp);
+	  if(!particletmp) continue;
+	  cout << "PDG of this hit is " << particletmp->PdgCode() << endl;
+       }
+       */
        
 
-      
-    
+
+       /*BEGIN for truth information*/
+
+      cout << "sp_from_truepi.size(): " << sp_from_truepi.size() << endl;
+      cout << "sp_from_truemu.size(): " << sp_from_truemu.size() << endl;
+
+      fillAngularDistributionMap3D(sp_from_truepi, end, angular_distribution_map_3D_truepi);
+      fillAngularDistributionMap3D(sp_from_truemu, end, angular_distribution_map_3D_truemu);
+
+      //cout << "angular_distribution_map_3D_truepi.size(): " << angular_distribution_map_3D_truepi.size() << endl;
+      //cout << "angular_distribution_map_3D_truemu.size(): " << angular_distribution_map_3D_truemu.size() << endl;
+
+      smoothAngularDistributionMap3D(angular_distribution_map_3D_truepi);
+      smoothAngularDistributionMap3D(angular_distribution_map_3D_truemu);
+
+      //cout << "angular_distribution_map_3D_truepi.size(): " << angular_distribution_map_3D_truepi.size() << endl;
+      //cout << "angular_distribution_map_3D_truemu.size(): " << angular_distribution_map_3D_truemu.size() << endl;
+
+      obtainPeakVector3D(angular_distribution_map_3D_truepi, v_trk_flg_peak, view_peak_map_truepi, true);
+      obtainPeakVector3D(angular_distribution_map_3D_truemu, v_trk_flg_peak, view_peak_map_truemu, false);
+
+      findBestAngularPeak3D(angular_distribution_map_3D_truepi, view_peak_map_truepi, best_peak_bins_truepi);
+      findBestAngularPeak3D(angular_distribution_map_3D_truemu, view_peak_map_truemu, best_peak_bins_truemu);
+
+      cout << "calling findShowerSpine3D with view_peak_map_truepi" << endl;
+      findShowerSpine3D(sp_from_truepi,  unavailable_hit_list, shower_spine_hit_list_vector_truepi, end, view_peak_map_truepi, best_peak_bins_truepi);
+      findShowerSpine3D(sp_from_truemu,  unavailable_hit_list, shower_spine_hit_list_vector_truemu, end, view_peak_map_truemu, best_peak_bins_truemu);
+      findShowerSpine3D(sp_from_recoobj,  unavailable_hit_list, shower_spine_hit_list_vector_truepidir, end, view_peak_map, best_peak_bins_truepi);
+      findShowerSpine3D(sp_from_recoobj,  unavailable_hit_list, shower_spine_hit_list_vector_truemudir, end, view_peak_map, best_peak_bins_truemu);
+
+      if(shower_spine_hit_list_vector_truepi.size()>0 && shower_spine_hit_list_vector_truepi[0].size()>0){
+	recob::Track reco_track_truepi = trackRebuid(shower_spine_hit_list_vector_truepi[0], atrack);
+	cout << "this event has true pi" << endl;
+	rebdautracktrue_length[i] = reco_track_truepi.Length();
+      }
+
+      if(shower_spine_hit_list_vector_truemu.size()>0 && shower_spine_hit_list_vector_truemu[0].size()>0){
+	recob::Track reco_track_truemu = trackRebuid(shower_spine_hit_list_vector_truemu[0], atrack);
+	cout << "this event has true mu" << endl; 
+	rebdautracktrue_length[i] = reco_track_truemu.Length();
+      }
+
+      if(shower_spine_hit_list_vector_truepidir.size()>0 && shower_spine_hit_list_vector_truepidir[0].size()>0){
+	recob::Track reco_track_truepidir = trackRebuid(shower_spine_hit_list_vector_truepidir[0], atrack);
+	rebdautracktruedir_length[i] = reco_track_truepidir.Length();
+      }
+
+      if(shower_spine_hit_list_vector_truemudir.size()>0 && shower_spine_hit_list_vector_truemudir[0].size()>0){
+	recob::Track reco_track_truemudir = trackRebuid(shower_spine_hit_list_vector_truemudir[0], atrack);
+	rebdautracktruedir_length[i] = reco_track_truemudir.Length();
+      }
+
+      /*
+       if(shower_spine_hit_list_vector_truepi.size()>1 && shower_spine_hit_list_vector_truepi[1].size()>0){
+        recob::Track reco_track_truepi = trackRebuid(shower_spine_hit_list_vector_truepi[1], atrack);
+	cout << "this event has true pi 1" << endl;
+       }
+
+       if(shower_spine_hit_list_vector_truemu.size()>1 && shower_spine_hit_list_vector_truemu[1].size()>0){
+      recob::Track reco_track_truemu = trackRebuid(shower_spine_hit_list_vector_truemu[1], atrack);
+      cout << "this event has true mu 1" << endl; 
+    }
+       */
+
+
+      /* all cheated */
+      /*
+	std::vector<art::Ptr<recob::Hit>> hit_from_truepi;
+	std::vector<art::Ptr<recob::Hit>> hit_from_truemu;
+
+       for(auto const &sp : sp_from_truepi){
+        if(fSpacePointsToHits.at(sp)) hit_from_truepi.push_back(fSpacePointsToHits.at(sp));
+       }
+       for(auto const &sp : sp_from_truemu){
+        if(fSpacePointsToHits.at(sp)) hit_from_truemu.push_back(fSpacePointsToHits.at(sp));
+       }
+
+       cout << "all cheated\n" << endl;
+       if(hit_from_truepi.size()) recob::Track reco_track_cheatpi = trackRebuid(hit_from_truepi, atrack);
+       if(hit_from_truemu.size()) recob::Track reco_track_cheatmu = trackRebuid(hit_from_truemu, atrack);
+      */
+       
+      /*
+       fillAngularDistributionMap3D(sp_from_truepi, end, angular_distribution_map_3D_truepi);
+       fillAngularDistributionMap3D(sp_from_truemu, end, angular_distribution_map_3D_truemu);
+
+       obtainPeakVector3D(angular_distribution_map_3D_truepi, v_trk_flg_peak, view_peak_map_truepi, true);
+       obtainPeakVector3D(angular_distribution_map_3D_truemu, v_trk_flg_peak, view_peak_map_truemu, false);
+
+       findBestAngularPeak3D(angular_distribution_map_3D_truepi, view_peak_map_truepi, best_peak_bins_truepi);
+       findBestAngularPeak3D(angular_distribution_map_3D_truemu, view_peak_map_truemu, best_peak_bins_truemu);
+
+       findShowerSpine3D(sp_from_truepi,  unavailable_hit_list, shower_spine_hit_list_vector_truepi, end, view_peak_map, best_peak_bins_truepi);
+       findShowerSpine3D(sp_from_truemu,  unavailable_hit_list, shower_spine_hit_list_vector_truemu, end, view_peak_map, best_peak_bins_truemu);
+       findShowerSpine3D(sp_from_recoobj,  unavailable_hit_list, shower_spine_hit_list_vector_truepidir, end, view_peak_map, best_peak_bins_truepi);
+       findShowerSpine3D(sp_from_recoobj,  unavailable_hit_list, shower_spine_hit_list_vector_truemudir, end, view_peak_map, best_peak_bins_truemu);
+
+       if(shower_spine_hit_list_vector_truepidir.size()>0 && shower_spine_hit_list_vector_truepidir[0].size()>0){
+        recob::Track reco_track_truepidir = trackRebuid(shower_spine_hit_list_vector_truepidir[0], atrack);
+	 rebdautracktruedir_length[i] = reco_track_truepidir.Length();
+       }
+       if(shower_spine_hit_list_vector_truemudir.size()>0 && shower_spine_hit_list_vector_truemudir[0].size()>0){
+        recob::Track reco_track_truemudir = trackRebuid(shower_spine_hit_list_vector_truemudir[0], atrack);
+	 rebdautracktruedir_length[i] = reco_track_truemudir.Length();
+       }
+       if(shower_spine_hit_list_vector_truepi.size()>0 && shower_spine_hit_list_vector_truepi[0].size()>0){
+        recob::Track reco_track_truepi = trackRebuid(shower_spine_hit_list_vector_truepi[0], atrack);
+	 rebdautracktrue_length[i] = reco_track_truepi.Length();
+       }
+       if(shower_spine_hit_list_vector_truemu.size()>0 && shower_spine_hit_list_vector_truemu[0].size()>0){
+      recob::Track reco_track_truemu = trackRebuid(shower_spine_hit_list_vector_truemu[0], atrack);
+      rebdautracktrue_length[i] = reco_track_truemu.Length();
+    }
+       if(best_peak_bins_truepi.size()){
+      best_peak_theta_true[i] = best_peak_bins_truepi[0].X() * thetaBinSize; 
+      best_peak_phi_true[i] = best_peak_bins_truepi[0].Y() * thetaBinSize; 
+    }
+       if(best_peak_bins_truemu.size()){
+      best_peak_theta_true[i] = best_peak_bins_truemu[0].X() * thetaBinSize; 
+      best_peak_phi_true[i] = best_peak_bins_truemu[0].Y() * thetaBinSize; 
+    }
+       */
+      /*END for truth information*/
+
+      smoothAngularDistributionMap3D(angular_distribution_map_3D_track);
+      //smoothAngularDistributionMap3D(angular_distribution_map_3D_shower);
+      //accumulateAngularDistributionMap3D(angular_distribution_map_3D_track, angular_distribution_map_3D_shower, angular_distribution_map_3D_pfparticle);
+
+      obtainPeakVector3D(angular_distribution_map_3D_track, v_trk_flg_peak, view_peak_map, true);
+      //obtainPeakVector3D(angular_distribution_map_3D_shower, v_trk_flg_peak, view_peak_map, false);
+      ////obtainPeakVector3D(angular_distribution_map_3D_pfparticle, v_trk_flg_peak, view_peak_map, true);
+
+      findBestAngularPeak3D(angular_distribution_map_3D_track, view_peak_map, best_peak_bins);
+      cout << "best_peak_bins.size(): " << best_peak_bins.size() << endl;
+      //findBestAngularPeak3D(angular_distribution_map_3D_pfparticle, view_peak_map, best_peak_bins);
+      //findShowerSpine3D(sp_from_recoobj,  unavailable_hit_list, shower_spine_hit_list_vector, end, view_peak_map, best_peak_bins);
+      cout << "calling findShowerSpine3D with view_peak_map" << endl;  
+      //findShowerSpine3D(sp_from_allhits,  unavailable_hit_list, shower_spine_hit_list_vector, end, view_peak_map, best_peak_bins);
+      findShowerSpine3D(sp_from_allhits_old,  unavailable_hit_list, shower_spine_hit_list_vector, end, view_peak_map, best_peak_bins);
+      cout << "n_recoDauTracks[i]: " << n_recoDauTracks[i] << endl;
+      cout << "shower_spine_hit_list_vector.size(): " << shower_spine_hit_list_vector.size() << endl;
+
+
+      //draw histos
+      //cout << "call fillHistAngularDistributionMap3DCheat" << endl;
+      fillHistAngularDistributionMap3DCheat(sp_from_allhits_old, end, angular_distribution_map_3D_cheat, h_angular_distribution_pfparticle_cheat_3D);
+      //fillHistAngularDistributionMap3DCheat(sp_from_recoobj, end, angular_distribution_map_3D_cheat, h_angular_distribution_pfparticle_cheat_3D);
+      //cout << "call drawHistAngularDistributionMap3DCheat" << endl;
+      drawHistAngularDistributionMap3DCheat(h_angular_distribution_pfparticle_cheat_3D, "cheat_angle_distribution.root", c);
+
+
+      /*
+       for(auto const& shower_spine_hit_list : shower_spine_hit_list_vector){
+
+        const simb::MCParticle *mcparticle;
+	 std::map<int,int> hits_pdg_map;
+	 for(auto const& hit : shower_spine_hit_list){
+      truthHitMatcher(hit, mcparticle);
+      if(hits_pdg_map.find(mcparticle->PdgCode()) == hits_pdg_map.end()) hits_pdg_map[mcparticle->PdgCode()] = 1;
+      else hits_pdg_map[mcparticle->PdgCode()] += 1;
+    }
+	  
+	 vector<pair<int, int>> v;
+	 for (map<int, int>::iterator it = hits_pdg_map.begin(); it != hits_pdg_map.end(); it++) {
+      v.push_back({ it->second, it->first });
+    }
+	 sort(v.rbegin(), v.rend());
+	 rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
+
+    }
+       */
+      /*
+	cout << "run loop over hit PDG map" << endl;
+       for(auto const& pair : v){
+       cout << pair.first << " " << pair.second << endl;
+       }
+      */
+
+      //art::FindManyP<recob::SpacePoint> spacepoint_per_hit(HitHandle, event, fSpacePointproducer);
+      //findShowerSpine3D(hits_from_reco_obj, spacepoint_per_hit, unavailable_hit_list, shower_spine_hit_list_vector, end, view_peak_map, best_peak_bins);
+
+      //cout << "best_peak_bins.size(): " << best_peak_bins.size() << endl;
+      //cout << "shower_spine_hit_list_vector.size(): " << shower_spine_hit_list_vector.size() << endl;
+      // cout << "shower_spine_hit_list_vector[0].size(): " << shower_spine_hit_list_vector[0].size() << endl;
+      //cout << "shower_spine_hit_list_vector[1].size(): " << shower_spine_hit_list_vector[1].size() << endl;
+
+      if(best_peak_bins.size()){
+	//int k=0;
+	//for(auto const& entry : best_peak_bins){
+	for(long unsigned int k=0; k<best_peak_bins.size(); k++){
+
+	  best_peak_theta[i][k] = best_peak_bins[k].X() * thetaBinSize;
+	  best_peak_phi[i][k] = best_peak_bins[k].Y() * thetaBinSize;
+
+	  // rebuild a track
+	  if(shower_spine_hit_list_vector.size()==0) continue;
+	  //cout << "Before running trackRebuid" << endl;
+	  cout << "shower_spine_hit_list_vector[k].size(): " << shower_spine_hit_list_vector[k].size() << endl;
+	  if(!shower_spine_hit_list_vector[k].size()) continue;
+	  recob::Track reco_track = trackRebuid(shower_spine_hit_list_vector[k], atrack);
+	  cout << "this event has rebuilt daughter track" << endl;
+	  //cout << "reco_track.Length(): " << reco_track.Length() << endl;
+	  rebdautrack_length[i][n_recoRebDauTracks[i]] = reco_track.Length();
+	  //cout << i << " " << n_recoRebDauTracks[i] << " " << rebdautrack_length[i][n_recoRebDauTracks[i]] << endl;
+
+	  const simb::MCParticle *mcparticle;
+	  std::map<int,int> hits_pdg_map;
+	  for(auto const& hit : shower_spine_hit_list_vector[k]){
+	    truthHitMatcher(hit, mcparticle);
+	    if(!mcparticle) continue;
+	    //cout << "mcparticle->PdgCode(): " << mcparticle->PdgCode() << endl;
+	    if(hits_pdg_map.find(mcparticle->PdgCode()) == hits_pdg_map.end()) hits_pdg_map[mcparticle->PdgCode()] = 1;
+	    else hits_pdg_map[mcparticle->PdgCode()] += 1;
+	  }
+
+	  vector<pair<int, int>> v;
+	  if(hits_pdg_map.size()){
+	    for (map<int, int>::iterator it = hits_pdg_map.begin(); it != hits_pdg_map.end(); it++) {
+	      v.push_back({ it->second, it->first });
+	      cout << it->second << " " << it->first << endl;
+	    }
+	    sort(v.rbegin(), v.rend());
+	    rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
+	    cout << "rebdautrack_pdg[i][n_recoRebDauTracks[i]]: " << v[0].second << endl;
+	  }
+
+	  n_recoRebDauTracks[i]++;
+	  // rebuild associations
+	  /*
+	    cout << "adding reco_track" << endl;
+	       anaTrackCollection->push_back(reco_track);
+
+	       std::vector<art::Ptr<recob::Hit>> hits_from_track_rebuild = shower_spine_hit_list_vector[k];
+	       std::vector<art::Ptr<recob::SpacePoint>> spacepoint_vec_reco;
+	          unsigned int hitsFromSpacePointsRecoSize = 0;
+
+		     for(size_t k_h=0; k_h<hits_from_track_rebuild.size(); k_h++){
+		          spacepoint_vec_reco.clear();
+			       spacepoint_vec_reco = spacepoint_per_hit_reco.at(hits_from_track_rebuild[k_h].key());
+			            hitsFromSpacePointsRecoSize += spacepoint_vec_reco.size();
+				       }
+				          art::Ptr<recob::Track> pTrackdau(makeTrackPtr(anaTrackCollection->size() - 1));
+					     lar_pandora::HitVector anaHitCollection_rebuild_tmp;
+					        or(auto hitptr : hits_from_track_rebuild){
+						     anaHitCollection_rebuild_tmp.push_back(hitptr);
+						        }
+							   util::CreateAssn(*this, evt, *(anaTrackCollection.get()), anaHitCollection_rebuild_tmp, *(anaTrackHitAssociations.get()));
+
+							      for (unsigned int hitIndex = 0; hitIndex < hits_from_track_rebuild.size(); hitIndex++){
+							           const art::Ptr<recob::Hit> phit(hits_from_track_rebuild.at(hitIndex));
+								        const int index((hitIndex < hitsFromSpacePointsRecoSize) ? hitIndex : std::numeric_limits<int>::max());
+									     recob::TrackHitMeta metadata(index, -std::numeric_limits<double>::max());
+									        }
+	  */
+	  //k++;
+	}
+      }
       /* end of imported bits*/
 
       // add track points
@@ -893,7 +1374,6 @@ namespace kaon_reconstruction{
       }
 
 
-
       //int plane0 =   trk_pid[0]->Ndf();
       //int plane1 =   trk_pid[1]->Ndf();
       //int plane2 =   trk_pid[2]->Ndf();
@@ -961,7 +1441,21 @@ namespace kaon_reconstruction{
 	}
       }
 
-      
+
+      //truth matcher
+      /*
+       double tmpEfrac = 0;
+       const simb::MCParticle *particle;
+       double tmpComplet = 0;
+       std::vector<art::Ptr<recob::Hit>> all_trackHits = track_hits.at(i);
+       truthMatcher( all_hits,  all_trackHits, particle, tmpEfrac, tmpComplet );
+       if(!particle) continue;
+       track_mcID[i] = particle->TrackId();
+       track_mcPDG[i] = particle->PdgCode();
+       track_Efrac[i] = tmpEfrac;
+       track_complet[i] = tmpComplet;
+       cout << "track_mcPDG[i]: " << track_mcPDG[i] << endl;
+      */
 
     } // end of track loop
 
@@ -1095,7 +1589,6 @@ namespace kaon_reconstruction{
     double max_E = -999.0;
     double total_E = 0.0;
     int TrackID = -999;
-    std::unordered_map<int,double> TrackIDE;
     // amount of energy deposited by the particle that deposited more energy... tomato potato... blabla
     //!if the collection of hits have more than one particle associate save the particle w/ the highest energy deposition
     //!since we are looking for muons/pions/protons this should be enough
@@ -1105,21 +1598,11 @@ namespace kaon_reconstruction{
     }
     for(std::map<int,double>::iterator ii = trkID_E.begin(); ii!=trkID_E.end(); ++ii){
       total_E += ii->second;
-      TrackIDE[ii->first] += ii->second;
-
-      if( TrackIDE[ii->first] > max_E ){
-	max_E = TrackIDE[ii->first];
-	TrackID = ii->first;
-	if( TrackID < 0 ) E_em += ii->second;
-      }
-      /*
       if((ii->second)>max_E){
 	max_E = ii->second;
 	TrackID = ii->first;
 	if( TrackID < 0 ) E_em += ii->second;
       }
-      */
-
     }
     // consider the most energetic hit to estimate PDG etc
     MCparticle = part_inv->TrackIdToParticle_P(TrackID);
@@ -1307,15 +1790,10 @@ namespace kaon_reconstruction{
     std::memset( rebdautrack_length, 0, sizeof(rebdautrack_length) );
     std::memset( dautrack_pdg, 0, sizeof(dautrack_pdg) );
     std::memset( rebdautrack_pdg, 0, sizeof(rebdautrack_pdg) );
-
-    std::memset( best_peak_x, 0, sizeof(best_peak_x) );
-    std::memset( best_peak_y, 0, sizeof(best_peak_y) );
-    std::memset( best_peak_z, 0, sizeof(best_peak_z) );
-
-    std::memset( best_peak_x_true, 0, sizeof(best_peak_x_true) );
-    std::memset( best_peak_y_true, 0, sizeof(best_peak_y_true) );
-    std::memset( best_peak_z_true, 0, sizeof(best_peak_z_true) );
-
+    std::memset( best_peak_theta, 0, sizeof(best_peak_theta) );
+    std::memset( best_peak_phi, 0, sizeof(best_peak_phi) );
+    std::memset( best_peak_theta_true, 0, sizeof(best_peak_theta_true) );
+    std::memset( best_peak_phi_true, 0, sizeof(best_peak_phi_true) );
     std::memset( track_dir_vtx, 0, sizeof(track_dir_vtx) );
     std::memset( track_PIDA, 0, sizeof(track_PIDA) );
     std::memset( track_PID_pdg, 0, sizeof(track_PID_pdg) );

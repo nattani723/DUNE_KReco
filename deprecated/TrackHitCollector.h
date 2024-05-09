@@ -9,14 +9,30 @@
 #define TRACK_HIT_COLLECTOR 1
 
 //#include "../CCKaonProducer_module.h"
-//#include "../HitSplitAlg_module.h"
+//#include "HitSplitAlg_module.h"
+//#include "art/Persistency/Common/PtrMaker.h"
+//#include "art_root_io/TFileService.h"
+/*
+#include "art/Framework/Core/EDFilter.h"
+#include "art/Framework/Core/EDProducer.h"
+#include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Principal/Run.h"
+#include "art/Framework/Principal/SubRun.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Principal/View.h"
+#include "art/Utilities/make_tool.h"
+*/
 
-#include "art/Framework/Services/Registry/ServiceHandle.h" 
 
-#include "larcore/Geometry/Geometry.h"
+#include "art/Framework/Core/ModuleMacros.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+
+//#include "larcore/Geometry/Geometry.h"
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardataobj/RecoBase/Hit.h"
@@ -33,10 +49,10 @@
 
 namespace kaon_reconstruction 
 {
-  
+
   class TrackUtilities
   {
-    
+
   public:
     /**
      * @brief Obtain wire pitch used for sliding linear fit
@@ -45,13 +61,13 @@ namespace kaon_reconstruction
     static constexpr float m_sliding_fit_half_window = 20.0f; 
     static float get_wire_pitch();
 
-    
+
   };
 
 
   class TrackHitCollector
   {
-    
+
   public:
     TrackHitCollector();
 
@@ -79,7 +95,7 @@ namespace kaon_reconstruction
      * @param peak_direction: vector of peak direction
      *
      */
-    
+
     void find_track_hits(SPList& sp_list, HitList& unavailable_hit_list, HitList& track_hit_list, const TVector3& k_end, const TVector3& peak_direction, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, const std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>>& hitToSpacePointMap) const;
 
     /**
@@ -196,7 +212,7 @@ namespace kaon_reconstruction
 
 
   }; // end of class
-  
+
 } // namespace kaon_reconstruction 
 
 #endif // #ifndef TRACK_HIT_COLLECTOR

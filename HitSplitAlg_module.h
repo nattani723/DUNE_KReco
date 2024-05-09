@@ -1,108 +1,29 @@
 #ifndef HitSplitAlg_Module
-#define HitSplitAlg_Module
+#define HitSplitAlg_Module 1
 
 
-#include "art/Framework/Core/EDProducer.h"
-#include "lardataobj/RecoBase/TrackHitMeta.h"
 #include "art/Persistency/Common/PtrMaker.h"
 
 #include "larpandoracontent/LArHelpers/LArPfoHelper.h"
 #include "larpandoracontent/LArObjects/LArPfoObjects.h"
+#include "larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
 
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 #include "larpandora/LArPandoraInterface/LArPandoraOutput.h" 
 
-// LArSoft includes
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "lardata/DetectorInfoServices/LArPropertiesService.h"
 #include "lardata/Utilities/GeometryUtilities.h"
-#include "larsim/Simulation/LArG4Parameters.h"
-#include "lardataobj/RecoBase/Track.h"
-#include "lardataobj/RecoBase/Vertex.h"
-#include "lardataobj/RecoBase/Cluster.h"
-#include "lardataobj/RecoBase/Wire.h"
-#include "lardataobj/RecoBase/Hit.h"
-#include "lardataobj/RecoBase/OpFlash.h"
-#include "lardataobj/RecoBase/Shower.h"
-#include "lardataobj/RecoBase/OpHit.h"
-#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
+#include "lardata/Utilities/AssociationUtil.h"
+#include "lardata/ArtDataHelper/MVAReader.h"
+
 #include "larsim/MCCheater/BackTrackerService.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "lardata/DetectorInfoServices/DetectorClocksService.h"
-#include "larreco/Calorimetry/CalorimetryAlg.h"
-#include "lardataobj/AnalysisBase/Calorimetry.h"
-#include "lardataobj/AnalysisBase/ParticleID.h"
-#include "lardata/Utilities/AssociationUtil.h"
-#include "larreco/RecoAlg/TrackMomentumCalculator.h"
-#include "lardataobj/AnalysisBase/T0.h"
-#include "lardata/ArtDataHelper/MVAReader.h"
-// Framework includes
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Principal/Event.h"
-#include "art/Framework/Principal/Handle.h"
-#include "art/Framework/Services/Registry/ServiceHandle.h"
-#include "art_root_io/TFileService.h"
-#include "art/Framework/Core/ModuleMacros.h"
-#include "canvas/Persistency/Common/FindMany.h"
-#include "canvas/Persistency/Common/PtrVector.h"
-#include "canvas/Persistency/Common/Ptr.h"
-#include "canvas/Utilities/InputTag.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "fhiclcpp/ParameterSet.h"
+#include "larsim/Simulation/LArG4Parameters.h"
+#include "larsim/EventWeight/Base/MCEventWeight.h"
 
-// ROOT includes 
-#include "TDirectory.h" 
-
-#include "art_root_io/TFileService.h"
-#include "art/Framework/Core/EDFilter.h"
-#include "art/Framework/Core/EDProducer.h"
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
-#include "art/Framework/Principal/Event.h"
-#include "art/Framework/Principal/Handle.h"
-#include "art/Framework/Principal/Run.h"
-#include "art/Framework/Principal/SubRun.h"
-#include "art/Framework/Core/EDAnalyzer.h"
-#include "art/Framework/Core/ModuleMacros.h"
-#include "art/Framework/Services/Registry/ServiceHandle.h"
-#include "art/Framework/Principal/View.h"
-#include "art/Utilities/make_tool.h"
-
-#include "canvas/Utilities/InputTag.h"
-#include "canvas/Utilities/ensurePointer.h"
-#include "canvas/Persistency/Common/Ptr.h"
-#include "canvas/Persistency/Common/FindMany.h"
-#include "canvas/Persistency/Common/FindManyP.h"
-#include "canvas/Persistency/Common/FindOne.h"
-#include "canvas/Persistency/Common/FindOneP.h"
-#include "canvas/Persistency/Common/PtrVector.h"
-#include "canvas/Persistency/Common/TriggerResults.h"
-#include "canvas/Utilities/InputTag.h"
-
-#include "fhiclcpp/ParameterSet.h"
-#include "fhiclcpp/ParameterSetRegistry.h"
-
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "cetlib_except/exception.h"
-
-#include "lardata/Utilities/AssociationUtil.h"
-#include "lardata/DetectorInfoServices/LArPropertiesService.h"
-#include "lardata/DetectorInfoServices/DetectorClocksService.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "larpandoracontent/LArObjects/LArThreeDSlidingFitResult.h"
-
-#include "larreco/Calorimetry/CalorimetryAlg.h"
-#include "larreco/RecoAlg/TrajectoryMCSFitter.h"
-#include "larreco/RecoAlg/TrackMomentumCalculator.h"
-
-#include "larcore/Geometry/Geometry.h"
-#include "larcore/CoreUtils/ServiceUtil.h"  
-#include "larcoreobj/SummaryData/POTSummary.h"
-#include "larcoreobj/SimpleTypesAndConstants/PhysicalConstants.h"
-#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
-
-#include "larcorealg/Geometry/GeometryCore.h" 
-
+#include "lardataobj/RecoBase/TrackHitMeta.h"
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Shower.h"
 #include "lardataobj/RecoBase/Cluster.h"
@@ -133,15 +54,58 @@
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RawData/BeamInfo.h"
 #include "lardataobj/RawData/TriggerData.h"
+
+#include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
+#include "larcoreobj/SummaryData/POTSummary.h"
+#include "larcoreobj/SimpleTypesAndConstants/PhysicalConstants.h"
 #include "larcoreobj/SummaryData/POTSummary.h"
 
+#include "larcore/Geometry/Geometry.h"
+#include "larcore/CoreUtils/ServiceUtil.h"  
 
+#include "larcorealg/Geometry/GeometryCore.h" 
+
+#include "larreco/Calorimetry/CalorimetryAlg.h"
+#include "larreco/RecoAlg/TrajectoryMCSFitter.h"
+#include "larreco/RecoAlg/TrackMomentumCalculator.h"
 
 #include "larevt/SpaceCharge/SpaceCharge.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
-#include "larsim/EventWeight/Base/MCEventWeight.h"
-#include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
+
+
+// Framework includes
+
+#include "art_root_io/TFileService.h"
+#include "art/Framework/Core/EDFilter.h"
+#include "art/Framework/Core/EDProducer.h"
+#include "art/Framework/Core/EDAnalyzer.h"
+#include "art/Framework/Core/ModuleMacros.h"
+#include "art/Framework/Principal/Event.h"
+#include "art/Framework/Principal/Handle.h"
+#include "art/Framework/Principal/Run.h"
+#include "art/Framework/Principal/SubRun.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "art/Framework/Principal/View.h"
+#include "art/Utilities/make_tool.h"
+
+#include "canvas/Utilities/InputTag.h"
+#include "canvas/Utilities/ensurePointer.h"
+#include "canvas/Persistency/Common/Ptr.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "canvas/Persistency/Common/FindMany.h"
+#include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Persistency/Common/FindOne.h"
+#include "canvas/Persistency/Common/FindOneP.h"
+#include "canvas/Persistency/Common/PtrVector.h"
+#include "canvas/Persistency/Common/TriggerResults.h"
+#include "canvas/Utilities/InputTag.h"
+
+#include "fhiclcpp/ParameterSet.h"
+#include "fhiclcpp/ParameterSetRegistry.h"
+
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "cetlib_except/exception.h"
 
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
@@ -149,11 +113,10 @@
 #include "nusimdata/SimulationBase/MCFlux.h"
 #include "nusimdata/SimulationBase/GTruth.h"
 
-#include "nusimdata/SimulationBase/MCTruth.h"
-#include "nusimdata/SimulationBase/MCFlux.h"
-#include "nusimdata/SimulationBase/MCParticle.h"
-
 #include "Pandora/PdgTable.h"
+
+// ROOT includes 
+#include "TDirectory.h" 
 
 #include "TCanvas.h"
 #include "TTree.h"
@@ -176,7 +139,7 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TTree.h>
-#include <TVectorT.h>
+#include <TVector3.h>
 #include <THStack.h>
 #include <TPDF.h>
 #include <TLegend.h>
@@ -214,7 +177,7 @@
 using namespace pandora;
 using namespace std;
 
-namespace HitSplitAlg_module{
+namespace kaon_reconstruction{
   class HitSplitAlg : public art::EDAnalyzer {
   public:
     
@@ -234,284 +197,6 @@ namespace HitSplitAlg_module{
     double truthLength( const simb::MCParticle *MCparticle );
     bool insideFV(double vertex[4]);
 
-    
-    void fillAngularDistributionMapCheat(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-				     TVector3 Kend_candidate,
-				     art::FindMany<simb::MCParticle,anab::BackTrackerHitMatchingData>& particles_per_hit,
-				     art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-				     std::map<int, std::map<int, double>>& angular_distribution_mrgid_map,
-				     std::map<int,int> &mrgidpdg,
-				     int& currentMergedId);
-
-void fillAngularDistributionMapCheat3D(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-				       std::vector<art::Ptr<recob::Hit>>& true_pi0_hit_list,
-				       TVector3 Kend_candidate,
-				       art::FindMany<simb::MCParticle,anab::BackTrackerHitMatchingData>& particles_per_hit,
-				       art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-				       std::map<int, std::map<int, std::map<int, double>>>& angular_distribution_mrgid_map_3D,
-				       std::map<int,int> &mrgidpdg,
-				       std::map<int,TVector3> &mrgidmom,
-				       int& currentMergedId);
-
-void fillAngularDistributionMap(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-				TVector3 Kend_candidate,
-				art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-				std::map<int, double>& angular_distribution_map);
-
-
-void fillAngularDistributionMap3D(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-				  TVector3 Kend_candidate,
-				  art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-				  std::map<int, std::map<int, double>> &angular_distribution_map_3D);
-
-void fillAngularDistributionMap3D(std::vector<art::Ptr<recob::SpacePoint>>& sp_from_recoobj,
-				  TVector3 Kend_candidate,
-				  std::map<int, std::map<int, double>> &angular_distribution_map_3D);
-
-int fillHistAngularDistributionMapCheat( std::map<int, std::map<int, double>>& angular_distribution_mrgid_map,
-					 std::map<int,int>& mrgidpdg,
-					 std::vector<TH1D*>& h_angular_distribution_pfparticle_cheat,
-					 vector<int>& v_pdg);
-
-
-int fillHistAngularDistributionMapCheat3D( std::map<int, std::map<int, std::map<int, double>>>& angular_distribution_mrgid_map_3D,
-					   std::map<int,int>& mrgidpdg,
-					   std::vector<TH2D*>& h_angular_distribution_pfparticle_cheat_3D,
-					   vector<int>& v_pdg);
-
-  void fillHistAngularDistributionMap3DCheat( std::vector<art::Ptr<recob::SpacePoint>>& sp_from_recoobj,
-							   TVector3 Kend_candidate,
-							   std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_map_3D_cheat,
-							   std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D);
-
-   void drawHistAngularDistributionMap3DCheat( std::map<int, TH2D*> &h_angular_distribution_pfparticle_cheat_3D,
-						TString outfile_name,
-					       TCanvas* &c);
-
-int fillHistAngularDistributionMap( std::map<int, double>& angular_distribution_map,
-				    vector<TH1D*>& h_angular_distribution_pfparticle,
-				    vector<bool>& v_trk_flg,
-				    bool trk_flg);
-
-int fillHistAngularDistributionMap3D( std::map<int, std::map<int, double>>& angular_distribution_map_3D,
-				      vector<TH2D*>& h_angular_distribution_pfparticle_3D,
-				      vector<bool>& v_trk_flg,
-				      bool trk_flg);
-
-int fillHistAngularDistributionMapSurface( std::map<int, std::map<int, double>>& angular_distribution_map_3D,
-					   vector<TH2D*>& h_angular_distribution_pfparticle_surface,
-					   vector<bool>& v_trk_flg,
-					   bool trk_flg);
-
-int fillHistAngularDistributionMapSphere( std::map<int, std::map<int, double>>& angular_distribution_map_3D,
-					  vector<TH3D*>& h_angular_distribution_pfparticle_sphere,
-					  vector<bool>& v_trk_flg,
-					  bool trk_flg);
-
-void smoothAngularDistributionMap(std::map<int, double> &angular_distribution_map);
-
-void smoothAngularDistributionMapCheat3D(std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_mrgid_map_3D);
-
-void smoothAngularDistributionMap3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D);
-
-void accumulateAngularDistributionMap3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D_1,
-					std::map<int, std::map<int, double>> &angular_distribution_map_3D_2,
-					std::map<int, std::map<int, double>> &angular_distribution_map_3D);
-
-void obtainPeakVectorCheat3D(std::map<int, std::map<int, std::map<int, double>>> &angular_distribution_mrgid_map_3D,
-			     std::map<int,int>& mrgidpdg,
-			     std::map<int, std::map<double, TVector2, std::greater<>>>& view_peak_map_cheat,
-			     vector<int>& v_pdg_peak);
-
-void obtainPeakVector3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D,
-			vector<bool>& v_trk_flg,
-			std::map<double, TVector2, std::greater<>>& view_peak_map,
-			bool trk_flg);
-
-void findBestAngularPeakCheat3D( std::map<int, std::map<double, TVector2, std::greater<>>>& view_peak_map_cheat,
-				 std::map<int, vector<TVector2>> &best_peak_bins_cheat);
-
-
-void findBestAngularPeak3D(std::map<int, std::map<int, double>> &angular_distribution_map_3D,
-			   std::map<double, TVector2, std::greater<>>& view_peak_vector,
-			   vector<TVector2> &best_peak_bins);
-
-void findShowerSpine3D(std::vector<art::Ptr<recob::SpacePoint>>& sp_from_pfparticle,
-		       std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-		       std::vector<std::vector<art::Ptr<recob::Hit>>>& shower_spine_hit_list_vector,
-		       TVector3 Kend_candidate,
-		       std::map<double, TVector2, std::greater<>>& view_peak_map,
-		       vector<TVector2> &best_peak_bins);
-
-
-void findShowerSpine3D(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-		       art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-		       std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-		       std::vector<std::vector<art::Ptr<recob::Hit>>>& shower_spine_hit_list_vector,
-		       TVector3 Kend_candidate,
-		       std::map<double, TVector2, std::greater<>>& view_peak_map,
-		       vector<TVector2> &best_peak_bins);
-
-
- void findShowerSpine3D(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-		       art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-		       std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-		       std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list,
-		       TVector3 Kend_candidate,
-		       std::map<double, TVector2, std::greater<>>& view_peak_map,
-		       vector<TVector2> &best_peak_bins);
-
-void findShowerSpine3D(std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-		       art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-		       std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-		       std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list,
-		       TVector3 Kend_candidate,
-		       std::map<double, TVector2, std::greater<>>& view_peak_map,
-		       vector<TVector2> &best_peak_bins,
-		       double true_length);
- 
- bool collectSubsectionHits(const lar_content::ThreeDSlidingFitResult &extrapolated_fit,
-			   const TVector3 &extrapolated_start_position,
-			   const TVector3 &extrapolated_end_position,
-			   const TVector3 &extrapolated_direction,
-			   const bool is_end_downstream,
-			   std::vector<art::Ptr<recob::SpacePoint>>& sp_from_pfparticle,
-			   vector<TVector3> &running_fit_position_vec,
-			   pandora::CartesianPointVector &pandora_running_fit_position_vec,
-			   std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-			   std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list);
-
-
- bool collectSubsectionHits(const lar_content::ThreeDSlidingFitResult &extrapolated_fit,
-			   const TVector3 &extrapolated_start_position,
-			   const TVector3 &extrapolated_end_position,
-			   const TVector3 &extrapolated_direction,
-			   const bool is_end_downstream,
-			   std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-			   art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-			   vector<TVector3> &running_fit_position_vec,
-			   pandora::CartesianPointVector &pandora_running_fit_position_vec,
-			   std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-			   std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list);
-
-
-bool collectSubsectionHits(const lar_content::ThreeDSlidingFitResult &extrapolated_fit,
-			   const TVector3 &extrapolated_start_position,
-			   const TVector3 &extrapolated_end_position,
-			   const TVector3 &extrapolated_direction,
-			   const bool is_end_downstream,
-			   std::vector<art::Ptr<recob::Hit>>& hits_from_pfparticle,
-			   art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-			   vector<TVector3> &running_fit_position_vec,
-			   pandora::CartesianPointVector &pandora_running_fit_position_vec,
-			   std::vector<art::Ptr<recob::Hit>>& unavailable_hit_list,
-			   std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list,
-			   TVector3 Kend_candidate,
-			   double true_length);
-
-void collectConnectedHits(std::vector<art::Ptr<recob::Hit>>& collected_hits,
-			  const TVector3 &extrapolated_start_position,
-			  const TVector3 &extrapolated_direction,
-			  vector<TVector3> &running_fit_position_vec,
-			  pandora::CartesianPointVector &pandora_running_fit_position_vec,
-			  std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list);
-
-void collectConnectedHits(std::vector<art::Ptr<recob::Hit>>& collected_hits,
-			  art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-			  const TVector3 &extrapolated_start_position,
-			  const TVector3 &extrapolated_direction,
-			  vector<TVector3> &running_fit_position_vec,
-			  pandora::CartesianPointVector &pandora_running_fit_position_vec,
-			  std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list);
-
-TVector3 getClosestPointToLine3D(const TVector3 &extrapolated_start_position,
-				 const TVector3 &extrapolated_direction,
-				 art::Ptr<recob::Hit>& collected_hit,
-				 const TVector3 &hit_position);
-
-bool isCloseToLine(const TVector3 &hit_position,
-		   const TVector3 &line_start,
-		   const TVector3 &line_direction,
-		   const double distance_to_line);
-
- bool isInsideROI( art::Ptr<recob::SpacePoint> &sp,
-		   TVector3 Kend_candidate);
-
-double getClosestDistance(art::Ptr<recob::Hit>& collected_hit,
-			  art::Ptr<recob::Hit>& shower_spine_hit,
-			  art::FindManyP<recob::SpacePoint>& spacepoint_per_hit);
-
-double getClosestDistance(art::Ptr<recob::Hit>& collected_hit,
-			  std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list,
-			  art::FindManyP<recob::SpacePoint>& spacepoint_per_hit);
-
-double getClosestDistance(const TVector3 &position,
-			  vector<TVector3> &test_positions);
-
-void obtainLength(std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list,
-		  art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-		  TVector3 Kend_candidate);
-
-void obtainLongitudinalDecomposition(std::vector<art::Ptr<recob::Hit>>& shower_spine_hit_list,
-				     art::FindManyP<recob::SpacePoint>& spacepoint_per_hit);
-
-int drawHistAngularDistributionMapCheat( std::vector<TH1D*> &h_angular_distribution_pfparticle_cheat,
-					 std::vector<int> &v_pdg,
-					 TString outfile_name,
-					 TCanvas*& c);
-
-int drawHistAngularDistributionMapCheat3D( std::vector<TH2D*> &h_angular_distribution_pfparticle_cheat_3D,
-					   std::vector<int> &v_pdg,
-					   TString outfile_name,
-					   TCanvas*& c);
-
-int drawHistAngularDistributionMap( std::vector<TH1D*>& h_angular_distribution_pfparticle,
-				    std::vector<bool>& v_trk_flg,
-				    TString outfile_name,
-				    TCanvas*& c);
-
-int drawHistAngularDistributionMap3D( std::vector<TH2D*>& h_angular_distribution_pfparticle_3D,
-				      std::vector<bool>& v_trk_flg,
-				      TString outfile_name,
-				      TCanvas*& c);
-
-int drawHistAngularDistributionMapSurface( std::vector<TH2D*> &h_angular_distribution_pfparticle_surface,
-					   std::vector<bool> &v_trk_flg,
-					   TString outfile_name,
-					   TCanvas* &c);
-
-int drawHistAngularDistributionMapSphere( std::vector<TH3D*> &h_angular_distribution_pfparticle_sphere,
-					  std::vector<bool> &v_trk_flg,
-					  TString outfile_name,
-					  TCanvas* &c);
-
-void fillTrueMatching(std::vector<art::Ptr<recob::Hit>>& hits_from_track,
-		      art::FindMany<simb::MCParticle,anab::BackTrackerHitMatchingData>& particles_per_hit,
-		      int track_i=-1,
-		      int daughter_i=-1);
-void fillTrueMatching_sh(std::vector<art::Ptr<recob::Hit>>& hits_from_shower,
-			 art::FindMany<simb::MCParticle,anab::BackTrackerHitMatchingData>& particles_per_hit,
-			 int track_i=-1,
-			 int daughter_i=-1);
-void fillTrackMatching(std::vector<art::Ptr<recob::Hit>>& hits_from_track,
-		       art::FindMany<simb::MCParticle,anab::BackTrackerHitMatchingData>& particles_per_hit,
-		       int track_i=-1,
-		       int daughter_i=-1);
-
-void fillShowerMatching(std::vector<art::Ptr<recob::Hit>>& hits_from_shower,
-			art::FindMany<simb::MCParticle,anab::BackTrackerHitMatchingData>& particles_per_hit,
-			int track_i=-1,
-			int daughter_i=-1);
-
-  recob::Track trackRebuid(std::vector<art::Ptr<recob::Hit>>& hit_list,
-			   art::FindManyP<recob::SpacePoint>& spacepoint_per_hit,
-			   const recob::Track& track);
-
-  recob::Track trackRebuid(std::vector<art::Ptr<recob::Hit>>& hit_list,
-			   const recob::Track& track);
-
-  recob::Track buildTrack(int id,
-                          lar_content::LArTrackStateVector& trackStateVector);
   
 
 
@@ -542,7 +227,6 @@ private:
   double	fMaxPIDAValue;
   double	fMinPIDAValue;
   bool	fSaveMCTree;
-  TCanvas * c = new TCanvas("c", "c", 800, 600);
 
     std::vector<art::Ptr<recob::Hit>> fHits;
     std::vector<art::Ptr<recob::Track>> fTracks;
@@ -553,9 +237,8 @@ private:
     std::map<art::Ptr<recob::Shower>, std::vector<art::Ptr<recob::Hit>>> fShowersToHits;
     std::map<art::Ptr<recob::Shower>, std::vector<art::Ptr<recob::SpacePoint>>> fShowersToSpacePoints;
     std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>> fHitsToSpacePoints;
-    std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>> fHitsToSpacePoints_old;
+    //std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>> fHitsToSpacePoints_recotrack;
     std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>> fSpacePointsToHits;
-    std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>> fSpacePointsToHits_old;
 
 
 
@@ -622,10 +305,12 @@ private:
     double rebdautrack_length[MAX_TRACKS][10];
     double dautrack_pdg[MAX_TRACKS][10];
     double rebdautrack_pdg[MAX_TRACKS][10];
-    double best_peak_theta[MAX_TRACKS][10];
-    double best_peak_phi[MAX_TRACKS][10];
-    double best_peak_theta_true[MAX_TRACKS];
-    double best_peak_phi_true[MAX_TRACKS];
+    double best_peak_x[MAX_TRACKS][10];
+    double best_peak_y[MAX_TRACKS][10];
+    double best_peak_z[MAX_TRACKS][10];
+    double best_peak_x_true[MAX_TRACKS];
+    double best_peak_y_true[MAX_TRACKS];
+    double best_peak_z_true[MAX_TRACKS];
 
     double track_dir_vtx[MAX_TRACKS][4];
     double track_PIDA[MAX_TRACKS][3];

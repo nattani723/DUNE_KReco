@@ -1,13 +1,17 @@
-art_make( MODULE_LIBRARIES 
+#include(MakeDuneToolBuilder)
+art_make( BASENAME_ONLY
+          MODULE_LIBRARIES
 	  larcorealg::Geometry
 	  larcore::Geometry_Geometry_service
-	  larsim::Simulation 
+	  larsim::Simulation nug4::ParticleNavigation lardataobj_Simulation 
 	  nug4::ParticleNavigation 
 	  lardataobj::Simulation
 	  larsim::MCCheater_BackTrackerService_service
 	  larsim::MCCheater_ParticleInventoryService_service
+	  larsim::MCCheater_PhotonBackTrackerService_service
           larsim::Utils
 	  lardata::Utilities
+	  lardata::ArtDataHelper
 	  larevt::Filters
 	  lardataobj::RawData
 	  lardataobj::RecoBase
@@ -18,8 +22,10 @@ art_make( MODULE_LIBRARIES
 	  larreco::RecoAlg
 	  dunereco::HitFinderDUNE
 	  larpandora::LArPandoraInterface
+	  dunecore::DuneObj
 	  dunecore::SignalShapingServiceDUNE10kt_service
 	  dunecore::SignalShapingServiceDUNE35t_service
+	  dunepdlegacy_Services_ChannelMap_PdspChannelMapService_service 
           nusimdata::SimulationBase
           ART_FRAMEWORK_CORE
 	  ART_FRAMEWORK_PRINCIPAL
@@ -37,9 +43,10 @@ art_make( MODULE_LIBRARIES
           ROOT_XMLIO
           ROOT_GDML
 	  ROOT_BASIC_LIB_LIST
-        )
-
+	  dunecore::Geometry
+	  ROOT::Geom
+)
+                      
 install_headers()
 install_fhicl()
 install_source()
-install_scripts()

@@ -1,6 +1,7 @@
 #ifndef TRACK_REBUILDER
 #define TRACK_REBUILDER 1
 
+//#include "HitSplitAlg_module.h" 
 #include "lardataobj/RecoBase/TrackHitMeta.h"
 #include "art/Persistency/Common/PtrMaker.h"
 

@@ -1,7 +1,22 @@
-art_make( MODULE_LIBRARIES 
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
+#link_libraries( -L$ENV{BOOST_LIB} -lboost_system -lboost_filesystem)
+art_make( 
+	  PandoraPFA::PandoraSDK
+	  PandoraPFA::PandoraMonitoring
+	  LIB_LIBRARIES 
+	  larcore_Geometry_Geometry_service
+	  larsim_Simulation lardataobj_Simulation 
+	  lardataalg_DetectorInfo
+	  lardataobj_RawData
+	  lardataobj_RecoBase
+	  lardataobj_AnalysisBase
+	  lardata_Utilities
+	  nusimdata::SimulationBase
+	  
+	  MODULE_LIBRARIES 
 	  larcorealg::Geometry
 	  larcore::Geometry_Geometry_service
-	  larsim::Simulation 
+	  larsim::Simulation
 	  nug4::ParticleNavigation 
 	  lardataobj::Simulation
 	  larsim::MCCheater_BackTrackerService_service
@@ -18,7 +33,7 @@ art_make( MODULE_LIBRARIES
 	  larreco::RecoAlg
 	  dunereco::HitFinderDUNE
 	  larpandora::LArPandoraInterface
-	  dunecore::SignalShapingServiceDUNE10kt_service
+	  dunecore::SignalShapingServiceDUNE10kt_service	
 	  dunecore::SignalShapingServiceDUNE35t_service
           nusimdata::SimulationBase
           ART_FRAMEWORK_CORE

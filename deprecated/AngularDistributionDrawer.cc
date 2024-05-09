@@ -22,7 +22,7 @@ namespace kaon_reconstruction
   } 
 
   //------------------------------------------------------------------------------------------------------------------------------------------      
-  
+
   void AngularDistributionDrawer::fill_angular_distribution_map_cheated_pdg(const std::vector<art::Ptr<recob::SpacePoint>>& sp_list_roi, const TVector3 k_end, AngularDistribution3DCheatPDGMap& angular_distribution_map_cheated_pdg, std::map<int, TH2D*> &h_angular_distribution_cheated_pdg, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, std::map<recob::Hit,int>& hit_pdg_map) const
   {
 
@@ -72,13 +72,13 @@ namespace kaon_reconstruction
     TCanvas* c = new TCanvas("c", "Canvas", 800, 600);
     //TCanvas * c("c", "Canvas", 800, 600);
     c->SetFillStyle(1001);
-    
+
     for(const auto& it_pdg : h_angular_distribution_cheated_pdg) {
-      
+
       int pdg_code = it_pdg.first;
       TH2D* histogram = it_pdg.second;
       histogram->SetFillStyle(1001);
-      
+
       int fill_color = kBlack; // Default color
       switch (pdg_code) {
       case 321: fill_color = kBlue; break;
@@ -93,13 +93,13 @@ namespace kaon_reconstruction
 
       histogram->SetFillColor(fill_color);
       h_stack->Add(histogram);
-      
+
     }
-    
+
     h_stack->Draw("hist lego3 0");
     leg->Draw();
     c->Write();
- 
+
   }
 
 

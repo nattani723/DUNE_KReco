@@ -6,7 +6,7 @@
 
 //header file
 #include "HitSplitAlg_module.h"
-#include "ReconstructionOrchestrator.h"
+#include "ReconstructionOrchestrator.cc"
 
 
 #ifdef __CLING__
@@ -153,8 +153,8 @@ namespace kaon_reconstruction{
     fEventTree->Branch("vertex", vertex,"vertex[n_vertices][4]/D");
     fEventTree->Branch("vtx_ID", vtx_ID,"vtx_ID[n_vertices]/I");
     fEventTree->Branch("n_reco_tracks", &n_recoTracks);
-    fEventTree->Branch("n_reco_dautracks", n_recoDauTracks, "n_recoDauTracks[n_reco_tracks]/I");
-    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/I");
+    fEventTree->Branch("n_reco_dautracks", n_recoDauTracks, "n_recoDauTracks[n_reco_tracks]/D");
+    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/D");
     fEventTree->Branch("n_decayVtx", &n_decayVtx);
     fEventTree->Branch("decayVtx", decayVtx,"decayVtx[n_decayVtx][3]/D");  //vertices found using decayID point Alg
     fEventTree->Branch("vtxID_trk", vtxID_trk,"vtxID_trk[n_reco_tracks][10]/I"); //track-vertex association
@@ -450,7 +450,6 @@ namespace kaon_reconstruction{
     fShowers.clear();
     fSpacePointsToHits.clear();
     fHitsToSpacePoints.clear();
-    //fHitsToSpacePoints_recotrack.clear();
     fTracksToHits.clear();
     fTracksToSpacePoints.clear();
     fShowersToHits.clear(); 
@@ -507,8 +506,6 @@ namespace kaon_reconstruction{
 
     std::vector<art::Ptr<recob::SpacePoint>> SpacePointlist_truemu;
     std::vector<art::Ptr<recob::SpacePoint>> SpacePointlist_truepi;
-    std::map<recob::Hit,int> hit_pdg_map;
-
 
     for (unsigned int iSP = 0; iSP < fSpacePoints.size(); ++iSP) { 
       const art::Ptr<recob::SpacePoint> spacePoint = fSpacePoints.at(iSP);
@@ -518,16 +515,11 @@ namespace kaon_reconstruction{
 
       const simb::MCParticle *particletmp;
       truthHitMatcher(hit, particletmp);
-
       if(!particletmp) continue;
-
       if(particletmp->PdgCode() == 211) SpacePointlist_truepi.push_back(spacePoint);
       if(particletmp->PdgCode() == -13) SpacePointlist_truemu.push_back(spacePoint);
 
-      hit_pdg_map[(*hit)] = particletmp->PdgCode();
-
     }
-
     
 
     for (unsigned int iTrack = 0; iTrack < fTracks.size(); ++iTrack) {
@@ -537,13 +529,6 @@ namespace kaon_reconstruction{
 
       for (unsigned int iHit = 0; iHit < trackHits.size(); ++iHit) {
 	const art::Ptr<recob::Hit> hit = trackHits.at(iHit);
-
-	/*
-	if(fHitsToSpacePoints.count(hit))
-	  fHitsToSpacePoints_recotrack[hit] = fHitsToSpacePoints.at(hit);
-	else cout << "this is not included in map!!" << endl;
-	*/
-
 	fTracksToHits[track].push_back(hit);
 	if (fHitsToSpacePoints.count(hit)) {
 	  fTracksToSpacePoints[track].push_back(fHitsToSpacePoints.at(hit));
@@ -597,8 +582,6 @@ namespace kaon_reconstruction{
     for(int i=0; i<n_recoTracks; ++i) {
 
       art::Ptr<recob::Track> track = tracklist[i];
-      n_recoRebDauTracks[i] = 0;
-      n_recoDauTracks[i] = 0;
 
       //vtx associations
       std::vector<art::Ptr<recob::Vertex>> vtxs = trk_from_vtx.at(i);
@@ -633,113 +616,36 @@ namespace kaon_reconstruction{
       TVector3 end(track->End().x(),
 		   track->End().y(),
 		   track->End().z());
+       
 
-      cout << "track_vtx: "  << track_vtx[i][0] << " " << track_vtx[i][1] << " " << track_vtx[i][2]  << endl;
-      cout << "track_end: " << track_end[i][0] << " " << track_end[i][1] << " " << track_end[i][2] << endl;
-
-      //truth matcher
-      
-       double tmpEfrac = 0;
-       const simb::MCParticle *particle;
-       double tmpComplet = 0;
-       std::vector<art::Ptr<recob::Hit>> all_trackHits = track_hits.at(i);
-       truthMatcher( all_hits,  all_trackHits, particle, tmpEfrac, tmpComplet );
-       if(!particle) continue;
-       track_mcID[i] = particle->TrackId();
-       track_mcPDG[i] = particle->PdgCode();
-       track_Efrac[i] = tmpEfrac;
-       track_complet[i] = tmpComplet;
-       //cout << "track_mcPDG[i]: " << track_mcPDG[i] << endl;
-       if(track_mcPDG[i]!=321) continue;
-
-       for(int j=0; j<n_recoTracks; ++j) {
-
-
-	 art::Ptr<recob::Track> dau_track = tracklist[j];
-
-	 if(dau_track->ID() == track->ID()) continue;
-
-	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
-						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
-						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
-
-	if(track_dau_distance<15){
-
-	  dautrack_length[i][n_recoDauTracks[i]] = dau_track->Length();
-	  dautrack_mcPDG[i][n_recoDauTracks[i]] = track_mcPDG[j];
-
-	  const simb::MCParticle *mcparticle_dau;
-	  std::map<int,int> hits_pdg_map_dau;
-	  for(auto const& hit : track_hits.at(j)){
-	    truthHitMatcher(hit, mcparticle_dau);
-	    if(!mcparticle_dau) continue;
-	    //cout << "mcparticle->PdgCode(): " << mcparticle->PdgCode() << endl;
-	    if(hits_pdg_map_dau.find(mcparticle_dau->PdgCode()) == hits_pdg_map_dau.end()) hits_pdg_map_dau[mcparticle_dau->PdgCode()] = 1;
-	    else hits_pdg_map_dau[mcparticle_dau->PdgCode()] += 1;
-	  }
-
-	  vector<pair<int, int>> v;
-	  if(hits_pdg_map_dau.size()){
-	    for (map<int, int>::iterator it = hits_pdg_map_dau.begin(); it != hits_pdg_map_dau.end(); it++)
-	      v.push_back({ it->second, it->first });
-	         
-	    sort(v.rbegin(), v.rend());
-	    dautrack_pdg[i][n_recoDauTracks[i]] = v[0].second;
-	    cout << "dautrack_pdg[i][n_recoDauTracks[i]]: " << v[0].second << endl;
-	  }
-	  n_recoDauTracks[i]++;
-	}
-
-       }       
-
-      /* imported codes*/
+      /* import from uB code*/
 
       std::vector<art::Ptr<recob::Hit>> hits_from_track = track_hits.at(i);
-      /*
-      cout << "begin unavailable hit list" << endl;
-      for(art::Ptr<recob::Hit>& hit : hits_from_track) {
-	cout << "a" << endl;
-	auto sp = fHitsToSpacePoints.at(hit);
-	cout << "a" << endl;
-
-	const TVector3 hit_position = sp->XYZ();
-	cout << hit_position.X() << " " << hit_position.Y() << " " << hit_position.Z() << endl;
-      }
-      cout << "end unavailable hit list" << endl;
-      */
 
       ReconstructionOrchestrator orchestrator;
       ReconstructionOrchestrator orchestrator_truepi;
       ReconstructionOrchestrator orchestrator_truemu;
 
       orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-
-      /*
-      TCanvas *c = (TCanvas*)gROOT->FindObject("c");
-      if (c) {
-	delete c;
-      }
-      c = new TCanvas("c", "Canvas", 800, 600);
-      orchestrator.drawHistograms(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, hit_pdg_map, c);
-      */
+      orchestrator_truepi.runReconstruction(SpacePointlist_truepi, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
+      orchestrator_truemu.runReconstruction(SpacePointlist_truemu, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
 
       std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
       std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
 
-	  cout << "Kaon_BR: " << Kaon_BR << endl;
-	  cout << "before loop rebuildTrackList" << endl;
+
       for(unsigned int j=0; j < rebuildTrackList.size(); j++) {
 	
 	const std::vector<TVector3> peakDirectionVector = orchestrator.getPeakDirectionList();
-
-	cout << "peakDirectionVector.at(j).X(): " << peakDirectionVector.at(j).X() << endl;
 	best_peak_x[i][j] = peakDirectionVector.at(j).X();
 	best_peak_y[i][j] = peakDirectionVector.at(j).Y();
 	best_peak_z[i][j] = peakDirectionVector.at(j).Z();
 
 	if(trackHitLists[j].empty()) continue;
+	rebdautrack_length[i][j] = rebuildTrackList[j].Length();  
 
-	rebdautrack_length[i][n_recoRebDauTracks[i]] = rebuildTrackList[j].Length();
+	n_recoRebDauTracks[i]++;
+
 
 	const simb::MCParticle *mcparticle;
 	std::map<int,int> nhits_pdg_map;
@@ -748,11 +654,8 @@ namespace kaon_reconstruction{
 	for(auto const& hit : trackHitLists[j]){
 
 	  truthHitMatcher(hit, mcparticle);
-	  if(!mcparticle){
-	    cout << "THIS HAS NO MCPARTICLE!!!" << endl;
-	    continue;
-	  }
- 
+	  if(!mcparticle) continue;
+
 	  hit_pdg_map[(*hit)] = mcparticle->PdgCode();
 
 	  if(nhits_pdg_map.find(mcparticle->PdgCode()) == nhits_pdg_map.end()) nhits_pdg_map[mcparticle->PdgCode()] = 1;
@@ -767,60 +670,42 @@ namespace kaon_reconstruction{
 	    cout << it->second << " " << it->first << endl;
 	  }
 	  sort(v.rbegin(), v.rend());
-	  rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
-
+	  rebdautrack_pdg[i][j] = v[0].second;
 	}
-
-	n_recoRebDauTracks[i]++;
-
-      }
-
-      if(Kaon_BR==2){
-
-	orchestrator_truepi.runReconstruction(SpacePointlist_truepi, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-	std::vector<recob::Track> rebuildTrackList_truepi = orchestrator_truepi.getRebuildTrackList(); 
-
-
-	if(!rebuildTrackList_truepi.empty()){
-	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
-	  
-	  std::vector<TVector3> peakDirectionVector =  orchestrator_truepi.getPeakDirectionList();
-	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
-	  
-	  orchestrator_truepi.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
-	  
-	}
-	
-      }
-      
-      if(Kaon_BR==1){
-
-	orchestrator_truemu.runReconstruction(SpacePointlist_truemu, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-	std::vector<recob::Track> rebuildTrackList_truemu = orchestrator_truemu.getRebuildTrackList(); 
-	
-	if(!rebuildTrackList_truemu.empty()){
-	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
-	  
-	  std::vector<TVector3> peakDirectionVector =  orchestrator_truemu.getPeakDirectionList();
-	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
-	  
-	  orchestrator_truemu.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
-	  
-	}
-
 
       }
        
+      std::vector<recob::Track> rebuildTrackList_truepi = orchestrator_truepi.getRebuildTrackList(); 
+      std::vector<recob::Track> rebuildTrackList_truemu = orchestrator_truemu.getRebuildTrackList(); 
+
+      if(!rebuildTrackList_truemu.empty()){
+
+	rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
+
+	std::vector<TVector3> peakDirectionVector =  orchestrator_truemu.getPeakDirectionList();
+
+	best_peak_x_true[i] = peakDirectionVector[0].X(); 
+	best_peak_y_true[i] = peakDirectionVector[0].Y(); 
+	best_peak_z_true[i] = peakDirectionVector[0].Z(); 
+
+	orchestrator_truemu.runReconstruction(SpacePointlist_truemu, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
+	rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
+
+      }
+      if(!rebuildTrackList_truepi.empty()){
+	
+	rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
+
+	std::vector<TVector3> peakDirectionVector =  orchestrator_truepi.getPeakDirectionList();
+
+	best_peak_x_true[i] = peakDirectionVector[0].X(); 
+	best_peak_y_true[i] = peakDirectionVector[0].Y(); 
+	best_peak_z_true[i] = peakDirectionVector[0].Z(); 
+
+	orchestrator_truepi.runReconstruction(SpacePointlist_truepi, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
+	rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
+
+      }
 
       
     
@@ -893,7 +778,6 @@ namespace kaon_reconstruction{
       }
 
 
-
       //int plane0 =   trk_pid[0]->Ndf();
       //int plane1 =   trk_pid[1]->Ndf();
       //int plane2 =   trk_pid[2]->Ndf();
@@ -961,7 +845,21 @@ namespace kaon_reconstruction{
 	}
       }
 
-      
+
+      //truth matcher
+      /*
+       double tmpEfrac = 0;
+       const simb::MCParticle *particle;
+       double tmpComplet = 0;
+       std::vector<art::Ptr<recob::Hit>> all_trackHits = track_hits.at(i);
+       truthMatcher( all_hits,  all_trackHits, particle, tmpEfrac, tmpComplet );
+       if(!particle) continue;
+       track_mcID[i] = particle->TrackId();
+       track_mcPDG[i] = particle->PdgCode();
+       track_Efrac[i] = tmpEfrac;
+       track_complet[i] = tmpComplet;
+       cout << "track_mcPDG[i]: " << track_mcPDG[i] << endl;
+      */
 
     } // end of track loop
 
@@ -1095,7 +993,6 @@ namespace kaon_reconstruction{
     double max_E = -999.0;
     double total_E = 0.0;
     int TrackID = -999;
-    std::unordered_map<int,double> TrackIDE;
     // amount of energy deposited by the particle that deposited more energy... tomato potato... blabla
     //!if the collection of hits have more than one particle associate save the particle w/ the highest energy deposition
     //!since we are looking for muons/pions/protons this should be enough
@@ -1105,21 +1002,11 @@ namespace kaon_reconstruction{
     }
     for(std::map<int,double>::iterator ii = trkID_E.begin(); ii!=trkID_E.end(); ++ii){
       total_E += ii->second;
-      TrackIDE[ii->first] += ii->second;
-
-      if( TrackIDE[ii->first] > max_E ){
-	max_E = TrackIDE[ii->first];
-	TrackID = ii->first;
-	if( TrackID < 0 ) E_em += ii->second;
-      }
-      /*
       if((ii->second)>max_E){
 	max_E = ii->second;
 	TrackID = ii->first;
 	if( TrackID < 0 ) E_em += ii->second;
       }
-      */
-
     }
     // consider the most energetic hit to estimate PDG etc
     MCparticle = part_inv->TrackIdToParticle_P(TrackID);

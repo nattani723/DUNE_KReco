@@ -1,15 +1,13 @@
 /*
-
  * Header file for Angular Distribution Drawer tool class
  * Plots angular distribution of hits and draw as histograms
  * Cheated PDG information also avialable
-
  */
 
 #ifndef ANGULAR_DISTRIBUTION_DRAWER
 #define ANGULAR_DISTRIBUTION_DRAWER 1
 
-//#include "../HitSplitAlg_module.h"
+//#include "HitSplitAlg_module.h"
 #include "ParticleDirectionFinder.h"
 #include <cmath>
 #include <TH2D.h>
@@ -21,7 +19,7 @@
 
 namespace kaon_reconstruction
 {
-  
+
 
   class AngularDistributionDrawer
   {
@@ -52,5 +50,3 @@ namespace kaon_reconstruction
 } //namespace kaon_reconstruction
 
 #endif 
-
-

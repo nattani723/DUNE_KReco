@@ -19,10 +19,10 @@ namespace kaon_reconstruction
   recob::Track TrackRebuilder::get_rebuild_reco_track() {
     return rebuild_reco_track;
   }
-  
+
   recob::Track TrackRebuilder::track_rebuild(TrackHitCollector::HitList& track_hit_list, const recob::Track& primary_track, recob::Track& rebuild_reco_track, const std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>>& hitToSpacePointMap) const{
-    
-    
+
+
     const float wire_pitch_w = TrackUtilities::get_wire_pitch();
 
     pandora::CartesianPointVector pandora_hit_position_vec;
@@ -42,7 +42,7 @@ namespace kaon_reconstruction
     lar_content::LArTrackStateVector track_state_vector;
     pandora::IntVector index_vector;
     const unsigned int sliding_fit_half_window = TrackUtilities::m_sliding_fit_half_window;
- 
+
     lar_content::LArPfoHelper::GetSlidingFitTrajectory(pandora_hit_position_vec,
 						       vertex_position,
 						       sliding_fit_half_window,
@@ -65,20 +65,20 @@ namespace kaon_reconstruction
   recob::Track TrackRebuilder::build_track(int track_id, lar_content::LArTrackStateVector& track_state_vector) const
   {
     if (track_state_vector.empty()) std::cout << "BuildTrack - No input trajectory points provided" << std::endl;
-    
+
     recob::tracking::Positions_t xyz;
     recob::tracking::Momenta_t pxpypz;
     recob::TrackTrajectory::Flags_t flags;
-    
+
     for (const lar_content::LArTrackState& trackState : track_state_vector) {
-      
+
       xyz.emplace_back(recob::tracking::Point_t(trackState.GetPosition().GetX(),
 						trackState.GetPosition().GetY(),
 						trackState.GetPosition().GetZ()));
       pxpypz.emplace_back(recob::tracking::Vector_t(trackState.GetDirection().GetX(),
 						    trackState.GetDirection().GetY(),
 						    trackState.GetDirection().GetZ()));
-      
+
       // Set flag NoPoint if point has bogus coordinates, otherwise use clean flag set
       if (std::fabs(trackState.GetPosition().GetX() - util::kBogusF) <
 	  std::numeric_limits<float>::epsilon() &&
@@ -93,7 +93,7 @@ namespace kaon_reconstruction
 	flags.emplace_back(recob::TrajectoryPointFlags());
       }
     }
-    
+
     // note from gc: eventually we should produce a TrackTrajectory, not a Track with empty covariance matrix and bogus chi2, etc.
     return recob::Track(
 			recob::TrackTrajectory(std::move(xyz), std::move(pxpypz), std::move(flags), false),
@@ -103,7 +103,7 @@ namespace kaon_reconstruction
 			recob::tracking::SMatrixSym55(),
 			recob::tracking::SMatrixSym55(),
 			track_id);
-    
+
   }
-  
+
 }//namespace kaon_reconstruction
