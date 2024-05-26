@@ -71,6 +71,10 @@ namespace kaon_reconstruction
 			    const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap,
 			    const std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>>& hitToSpacePointMap);
 
+    void set_peak_direction(const TVector3 peak_direction);
+
+    const TVector3 get_peak_direction();
+
   private:
 
 
@@ -201,7 +205,7 @@ namespace kaon_reconstruction
     unsigned int m_high_resolution_sliding_fit_window; ///< The high resolution sliding fit window for track fits
     float m_high_resolution_distance_to_line;
     float m_high_resolution_hit_connection_distance;
-
+    TVector3 m_peak_direction;
 
   }; // end of class
 
@@ -274,9 +278,26 @@ namespace kaon_reconstruction
       if (track_hit_list.size() < m_hit_threshold_for_track)
         return STATUS_CODE_NOT_FOUND;
 
+      this->set_peak_direction(peak_direction);
       return STATUS_CODE_SUCCESS;
 
     }
+
+  //---------------------------------------------------------------------------------------------------------------------------------
+  
+  void TrackHitCollector::set_peak_direction(const TVector3 peak_direction)
+  {
+    m_peak_direction = peak_direction;
+  }
+
+  //---------------------------------------------------------------------------------------------------------------------------------
+       
+  const TVector3 TrackHitCollector::get_peak_direction()
+  {
+    return m_peak_direction;
+  }
+       
+  //---------------------------------------------------------------------------------------------------------------------------------
 
 
   void TrackHitCollector::find_track_hits(SPList& sp_list, HitList& unavailable_hit_list, HitList& track_hit_list, const TVector3& k_end, const TVector3& peak_direction, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, const std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>>& hitToSpacePointMap) const
@@ -358,16 +379,16 @@ namespace kaon_reconstruction
       // Remove furthest away hits
       if(excess_hits_in_fit>0){
 
-for (int i = 0; i < excess_hits_in_fit; ++i){
-  pandora_running_fit_position_vec.erase(std::prev(pandora_running_fit_position_vec.end())); 
-}
-
-running_fit_position_vec.clear();
-TVector3 hit_position_tmp;
-for(auto pandora_running_fit_position : pandora_running_fit_position_vec){
-  hit_position_tmp.SetXYZ(pandora_running_fit_position.GetX(), pandora_running_fit_position.GetY(), pandora_running_fit_position.GetZ());
-  running_fit_position_vec.push_back(hit_position_tmp);
-}
+	for (int i = 0; i < excess_hits_in_fit; ++i){
+	  pandora_running_fit_position_vec.erase(std::prev(pandora_running_fit_position_vec.end())); 
+	}
+	
+	running_fit_position_vec.clear();
+	TVector3 hit_position_tmp;
+	for(auto pandora_running_fit_position : pandora_running_fit_position_vec){
+	  hit_position_tmp.SetXYZ(pandora_running_fit_position.GetX(), pandora_running_fit_position.GetY(), pandora_running_fit_position.GetZ());
+	  running_fit_position_vec.push_back(hit_position_tmp);
+	}
 
       }
 

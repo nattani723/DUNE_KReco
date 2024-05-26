@@ -27,6 +27,11 @@ namespace kaon_reconstruction {
     const std::vector<HitList>& getHitLists();
     const std::vector<recob::Track>& getRebuildTrackList();
 
+    void ClearData(){
+      PeakDirectionList.clear();
+      rebuildTrackList.clear();
+      trackHitLists.clear();
+    }
 
   private:
     ParticleDirectionFinder directionFinder;
@@ -89,6 +94,8 @@ namespace kaon_reconstruction {
 
     void ReconstructionOrchestrator::runReconstruction(SPList& sp_list, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, const std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>>& hitToSpacePointMap,  const art::Ptr<recob::Track> k_track, const HitList& hits_from_track) {
 
+      this->ClearData(); 
+
       // Container for peak direction vectors calculated by ParticleDirectionFinder
       std::vector<TVector3> peakDirectionVector;
 
@@ -110,15 +117,19 @@ namespace kaon_reconstruction {
       for(const TVector3& peakDirection : peakDirectionVector){
 
 	HitList trackHitList;
-	PeakDirectionList.push_back( peakDirection );
+	//PeakDirectionList.push_back( peakDirection );
 
 	// Run the TrackHitCollector
 
+	if(spacepointToHitMap.empty()) return;
 	auto collectorStatus = hitCollector.Run(directionFinder.get_k_end(), directionFinder.get_sp_list_roi(), peakDirection, unavailableHitList, trackHitList, spacepointToHitMap, hitToSpacePointMap);
+
 	if (collectorStatus != pandora::STATUS_CODE_SUCCESS) {
 	  std::cout << "TrackHitCollector FAILED" << std::endl;
 	  continue;
 	}
+	else 
+	  PeakDirectionList.push_back(hitCollector.get_peak_direction());
 
 	//make run function with statuscode return
 	//think about how to retrieve reco::track object define getrebuildtracj in this orchestrator?
@@ -136,6 +147,8 @@ namespace kaon_reconstruction {
     //with cheated direction
 
     void ReconstructionOrchestrator::runReconstruction(SPList& sp_list, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, const std::map<art::Ptr<recob::Hit>, art::Ptr<recob::SpacePoint>>& hitToSpacePointMap,  const art::Ptr<recob::Track> k_track, const HitList& hits_from_track, std::vector<TVector3>& peakDirectionVector) {
+
+      this->ClearData(); 
 
       std::vector<TVector3> peakDirectionVector_unused;
 
@@ -155,7 +168,7 @@ namespace kaon_reconstruction {
       for(const TVector3& peakDirection : peakDirectionVector){
 
 	HitList trackHitList;
-	PeakDirectionList.push_back( peakDirection );
+	//PeakDirectionList.push_back( peakDirection );
 
 	// Run the TrackHitCollector
 
@@ -164,6 +177,8 @@ namespace kaon_reconstruction {
 	  std::cout << "TrackHitCollector FAILED" << std::endl;
 	  continue;
 	}
+	else
+	  PeakDirectionList.push_back(hitCollector.get_peak_direction());
 
 	//make run function with statuscode return
 	//think about how to retrieve reco::track object define getrebuildtracj in this orchestrator?
