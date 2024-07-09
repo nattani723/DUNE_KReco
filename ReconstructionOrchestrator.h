@@ -80,10 +80,12 @@ namespace kaon_reconstruction {
       AngularDistributionDrawer::AngularDistribution3DCheatPDGMap angular_distribution_map_cheated_pdg;
 
       std::map<int, TH2D*> h_angular_distribution_cheated_pdg;
-      std::vector<art::Ptr<recob::SpacePoint>> sp_list_roi = directionFinder.get_sp_list_roi();
+      //std::vector<art::Ptr<recob::SpacePoint>> sp_list_roi = directionFinder.get_sp_list_roi();
+      std::vector<art::Ptr<recob::SpacePoint>> sp_list_peak_search = directionFinder.get_sp_list_peak_search();
       const TVector3 k_end = directionFinder.get_k_end();
 
-      distributionDrawer.runDrawer(sp_list_roi, k_end, angular_distribution_map_cheated_pdg, h_angular_distribution_cheated_pdg, spacepointToHitMap, hit_pdg_map, c);
+      distributionDrawer.runDrawer(sp_list_peak_search, k_end, angular_distribution_map_cheated_pdg, h_angular_distribution_cheated_pdg, spacepointToHitMap, hit_pdg_map, c);
+      //distributionDrawer.runDrawer(sp_list_roi, k_end, angular_distribution_map_cheated_pdg, h_angular_distribution_cheated_pdg, spacepointToHitMap, hit_pdg_map, c);
 
     }
 
