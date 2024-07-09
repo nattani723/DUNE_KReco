@@ -118,11 +118,83 @@ namespace kaon_reconstruction
 
     TFile outfile(outfile_name, "update");
     auto h_stack = new THStack("h_stack", "");
-    TLegend * leg = new TLegend(0.7, 0.7, 0.9, 0.9, "");
-    //TCanvas * c = new TCanvas("c", "Canvas", 800, 600);
-    //TCanvas * c("c", "Canvas", 800, 600);
+
+    c->Clear();
     c->SetFillStyle(1001);
 
+    TLegend * leg = new TLegend(0.1, 0.0, 0.9, 1.0, "");
+    leg->SetBorderSize(0);
+    leg->SetTextSize(0.2);  
+    leg->SetNColumns(2);
+
+    const double Single_PadSplit = 0.85;
+    TPad *p_plot = new TPad("p_plot","p_plot",0,0,1,Single_PadSplit);
+    TPad *p_legend = new TPad("p_legend","p_legend",0,Single_PadSplit,1,1);
+    p_legend->SetBottomMargin(0);
+    p_legend->SetTopMargin(0.1);
+    p_plot->SetTopMargin(0.01);
+
+    std::set<int> added_pids;
+
+    for(const auto& it_pdg : h_angular_distribution_cheated_pdg) {
+      int pdg_code = it_pdg.first;
+      TH2D* histogram = it_pdg.second;
+      histogram->SetFillStyle(1001);
+
+      int fill_color = kGray; // Default color
+
+      switch (pdg_code) {
+      case 321:
+	fill_color = kBlue;
+	if (added_pids.find(pdg_code) == added_pids.end()) {
+	  leg->AddEntry(histogram, "K^{+}", "f");
+	  added_pids.insert(pdg_code);
+	}
+	break;
+      case -13:
+	fill_color = kCyan;
+	if (added_pids.find(pdg_code) == added_pids.end()) {
+	  leg->AddEntry(histogram, "#mu^{+}", "f");
+	  added_pids.insert(pdg_code);
+	}
+	break;
+      case 211:
+	fill_color = kMagenta;
+	if (added_pids.find(pdg_code) == added_pids.end()) {
+	  leg->AddEntry(histogram, "#pi^{+}", "f");
+	  added_pids.insert(pdg_code);
+	}
+	break;
+      case -11:
+      case 11:
+	fill_color = kGreen + 2;
+	if (added_pids.find(11) == added_pids.end() && added_pids.find(-11) == added_pids.end()) {
+	  leg->AddEntry(histogram, "Shower", "f");
+	  added_pids.insert(pdg_code);
+	}
+	break;
+      case 2212:
+      case 2112:
+	fill_color = kRed;
+	if (added_pids.find(2212) == added_pids.end() && added_pids.find(2112) == added_pids.end() ) {
+	  leg->AddEntry(histogram, "Nucleon", "f");
+	  added_pids.insert(pdg_code);
+	}
+	break;
+      default:
+	if (added_pids.find(999) == added_pids.end()) {
+	  leg->AddEntry(histogram, "Others", "f");
+	  added_pids.insert(999);
+	}
+	break; // Use default color
+      }
+
+    //TLegend * leg = new TLegend(0.7, 0.7, 0.9, 0.9, "");
+    //TCanvas * c = new TCanvas("c", "Canvas", 800, 600);
+    //TCanvas * c("c", "Canvas", 800, 600);
+    //c->SetFillStyle(1001);
+
+      /*
     for(const auto& it_pdg : h_angular_distribution_cheated_pdg) {
 
       int pdg_code = it_pdg.first;
@@ -140,15 +212,32 @@ namespace kaon_reconstruction
       case 2112: fill_color = kRed; break;
       default: break; // Use default color
       }
+      */
 
       histogram->SetFillColor(fill_color);
+      histogram->SetFillStyle(1001);
       h_stack->Add(histogram);
-
     }
 
+    p_legend->Draw();
+    p_legend->cd();
+    leg->Draw();
+    c->cd();
+    p_plot->Draw();
+    p_plot->cd();
     h_stack->Draw("hist lego3 0");
-    leg->Draw("same");
+
+    h_stack->GetXaxis()->SetTitle("#Phi [rad]");
+    h_stack->GetYaxis()->SetTitle("#Theta [rad]");
+    h_stack->GetXaxis()->SetTitleOffset(1.5);
+    h_stack->GetYaxis()->SetTitleOffset(1.5);
+
+    c->Modified();
     c->Write();
+
+    //h_stack->Draw("hist lego3 0");
+    //leg->Draw("same");
+    //c->Write();
   }
 
 
