@@ -57,9 +57,13 @@ namespace kaon_reconstruction
     float get_phi_bin_size() const;
 
     SPList& get_sp_list_roi();
+    SPList& get_sp_list_peak_search();
     const TVector3& get_k_end() const;
     const TVector3& get_k_vtx() const;
-    void clearData(){ sp_list_roi.clear(); }
+    void clearData(){
+      sp_list_roi.clear();
+      sp_list_peak_search.clear();
+    }
 
   private:
 
@@ -72,8 +76,6 @@ namespace kaon_reconstruction
      *
      */
 
-    //void collect_sp_in_roi(const SPList& sp_list, const TVector3& k_end, float& region_of_interest, SPList& sp_list_roi) const;
-
     void collect_sp_in_roi(const SPList& sp_list, const TVector3& k_end, float& region_of_interest, SPList& sp_list_roi, const HitList& unavailable_hit_list, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap) const;
 
     /*
@@ -85,7 +87,6 @@ namespace kaon_reconstruction
      *
      */
 
-    //void FillAngularDistributionMap(const std::vector<art::Ptr<recob::SpacePoint>>& SPListROI, const TVector3 KEnd, AngularDistribution3DMap& AngularDistributionMap) const;
     void fill_angular_distribution_map(const SPList& sp_list_roi, const TVector3 k_end, AngularDistribution3DMap& angular_distribution_map) const;
 
     /*
@@ -105,7 +106,6 @@ namespace kaon_reconstruction
      * 
      */
 
-    //void retrieve_peak_directions(const angular_distribution_map_3d& angular_distribution_map, std::vector<TVector2>& peak_direction_vectors) const;
     void retrieve_peak_directions(const AngularDistribution3DMap& angular_distribution_map, std::map<double, TVector3, std::greater<>>& sort_peak_direction_map) const;
 
     /*
@@ -129,6 +129,7 @@ namespace kaon_reconstruction
     size_t m_max_num_peak;
 
     SPList sp_list_roi;
+    SPList sp_list_peak_search;
     TVector3 k_end;
     TVector3 k_vtx;
 
@@ -167,6 +168,10 @@ namespace kaon_reconstruction
     return sp_list_roi; 
   }
 
+  ParticleDirectionFinder::SPList& ParticleDirectionFinder::get_sp_list_peak_search() { 
+    return sp_list_peak_search; 
+  }
+
   const TVector3& ParticleDirectionFinder::get_k_end() const { 
     return k_end; 
   }
@@ -197,21 +202,29 @@ namespace kaon_reconstruction
 
     // get sp list for peak finder
     SPList sp_list_peak_search;
-    this->collect_sp_in_roi(sp_list_roi, k_end, m_peak_search_region, sp_list_peak_search, unavailable_hit_list, spacepointToHitMap);
-    nSP_roi_end = sp_list_peak_search.size();
+    SPList sp_list_peak_search_vtx;
+    SPList sp_list_peak_search_end;
 
-    sp_list_peak_search.clear();
-    this->collect_sp_in_roi(sp_list_roi, k_vtx, m_peak_search_region, sp_list_peak_search, unavailable_hit_list, spacepointToHitMap);
-    nSP_roi_vtx = sp_list_peak_search.size();
+    this->collect_sp_in_roi(sp_list_roi, k_end, m_peak_search_region, sp_list_peak_search_end, unavailable_hit_list, spacepointToHitMap);
+    nSP_roi_end = sp_list_peak_search_end.size();
 
-    if(nSP_roi_vtx > nSP_roi_end) k_end = k_vtx;
+    //sp_list_peak_search.clear();
+    this->collect_sp_in_roi(sp_list_roi, k_vtx, m_peak_search_region, sp_list_peak_search_vtx, unavailable_hit_list, spacepointToHitMap);
+    nSP_roi_vtx = sp_list_peak_search_vtx.size();
 
+    if(nSP_roi_vtx > nSP_roi_end){
+      k_end = k_vtx;
+      sp_list_peak_search = sp_list_peak_search_vtx;
+    }else
+      sp_list_peak_search = sp_list_peak_search_end;
+				  
     if (sp_list_peak_search.empty())
       return STATUS_CODE_NOT_FOUND;
 
     // Fill angular distribution map
     AngularDistribution3DMap angular_distribution_map;
-    this->fill_angular_distribution_map(sp_list_roi, k_end, angular_distribution_map);
+    //this->fill_angular_distribution_map(sp_list_roi, k_end, angular_distribution_map);
+    this->fill_angular_distribution_map(sp_list_peak_search, k_end, angular_distribution_map);
 
     if (angular_distribution_map.empty())
       return STATUS_CODE_NOT_FOUND;
