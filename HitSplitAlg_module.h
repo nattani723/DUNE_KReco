@@ -300,6 +300,8 @@ private:
     double track_end[MAX_TRACKS][4];
     double track_length[MAX_TRACKS];
     double dautrack_length[MAX_TRACKS][10];
+    double dautrack_distance[MAX_TRACKS][10];
+    double rebdautrack_distance[MAX_TRACKS][10];
     double rebdautracktrue_length[MAX_TRACKS];
     double rebdautracktruedir_length[MAX_TRACKS];
     double rebdautrack_length[MAX_TRACKS][10];

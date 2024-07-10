@@ -165,6 +165,8 @@ namespace kaon_reconstruction{
     fEventTree->Branch("track_ID", track_ID,"track_ID[n_reco_tracks]/I");
     fEventTree->Branch("track_length", track_length,"track_length[n_reco_tracks]/D");
     fEventTree->Branch("dautrack_length", dautrack_length,"dautrack_length[n_reco_tracks][10]/D");
+    fEventTree->Branch("dautrack_distance", dautrack_distance,"dautrack_distance[n_reco_tracks][10]/D");
+    fEventTree->Branch("rebdautrack_distance", rebdautrack_distance,"rebdautrack_distance[n_reco_tracks][10]/D");
     fEventTree->Branch("rebdautracktrue_length", rebdautracktrue_length,"rebdautracktrue_length[n_reco_tracks]/D");
     fEventTree->Branch("rebdautracktruedir_length", rebdautracktruedir_length,"rebdautracktruedir_length[n_reco_tracks]/D");
     fEventTree->Branch("rebdautrack_length", rebdautrack_length,"rebdautrack_length[n_reco_tracks][10]/D");
@@ -1326,9 +1328,11 @@ namespace kaon_reconstruction{
     std::memset( track_end, 0, sizeof(track_end) );
     std::memset( track_length, 0, sizeof(track_length) );
     std::memset( dautrack_length, 0, sizeof(dautrack_length) );
+    std::memset( dautrack_distance, 0, sizeof(dautrack_distance) );
     std::memset( rebdautracktrue_length, 0, sizeof(rebdautracktrue_length) );
     std::memset( rebdautracktruedir_length, 0, sizeof(rebdautracktruedir_length) );
     std::memset( rebdautrack_length, 0, sizeof(rebdautrack_length) );
+    std::memset( rebdautrack_distance, 0, sizeof(rebdautrack_distance) );
     std::memset( dautrack_pdg, 0, sizeof(dautrack_pdg) );
     std::memset( rebdautrack_pdg, 0, sizeof(rebdautrack_pdg) );
 
