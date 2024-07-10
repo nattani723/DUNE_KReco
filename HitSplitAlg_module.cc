@@ -594,6 +594,7 @@ namespace kaon_reconstruction{
     art::FindManyP<recob::Hit> shower_hits(showerHandle, event, fShowerModuleLabel);
 
     // loop reco tracks
+    int ntracks = 0;
     for(int i=0; i<n_recoTracks; ++i) {
 
       art::Ptr<recob::Track> track = tracklist[i];
@@ -714,6 +715,7 @@ namespace kaon_reconstruction{
 
       orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
 
+      //turn this on if you need to print out histogram  
       /*
       TCanvas *c = (TCanvas*)gROOT->FindObject("c");
       if (c) {
@@ -726,20 +728,33 @@ namespace kaon_reconstruction{
       std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
       std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
 
-	  cout << "Kaon_BR: " << Kaon_BR << endl;
-	  cout << "before loop rebuildTrackList" << endl;
+      cout << "Kaon_BR: " << Kaon_BR << endl;
+      cout << "before loop rebuildTrackList" << endl;
+
       for(unsigned int j=0; j < rebuildTrackList.size(); j++) {
 	
 	const std::vector<TVector3> peakDirectionVector = orchestrator.getPeakDirectionList();
 
-	cout << "peakDirectionVector.at(j).X(): " << peakDirectionVector.at(j).X() << endl;
-	best_peak_x[i][j] = peakDirectionVector.at(j).X();
-	best_peak_y[i][j] = peakDirectionVector.at(j).Y();
-	best_peak_z[i][j] = peakDirectionVector.at(j).Z();
+	//best_peak_x[i][j] = peakDirectionVector.at(j).X();
+	//best_peak_y[i][j] = peakDirectionVector.at(j).Y();
+	//best_peak_z[i][j] = peakDirectionVector.at(j).Z();
 
 	if(trackHitLists[j].empty()) continue;
 
-	rebdautrack_length[i][n_recoRebDauTracks[i]] = rebuildTrackList[j].Length();
+	TVector3 pos(rebuildTrackList[j].Vertex().X(),rebuildTrackList[j].Vertex().Y(),rebuildTrackList[j].Vertex().Z());
+
+	double track_dau_distance=TMath::Sqrt((end.X()-pos.X())*(end.X()-pos.X()) +
+					      (end.Y()-pos.Y())*(end.Y()-pos.Y()) +
+					      (end.Z()-pos.Z())*(end.Z()-pos.Z()));
+
+	if (track_dau_distance>10) continue;//store distance
+
+	best_peak_x[ntracks][n_recoRebDauTracks[ntracks]] = peakDirectionVector.at(j).X();
+	best_peak_y[ntracks][n_recoRebDauTracks[ntracks]] = peakDirectionVector.at(j).Y();
+	best_peak_z[ntracks][n_recoRebDauTracks[ntracks]] = peakDirectionVector.at(j).Z();
+
+	rebdautrack_length[ntracks][n_recoRebDauTracks[ntracks]] = rebuildTrackList[j].Length();
+	//rebdautrack_length[i][n_recoRebDauTracks[i]] = rebuildTrackList[j].Length();
 
 	const simb::MCParticle *mcparticle;
 	std::map<int,int> nhits_pdg_map;
@@ -764,14 +779,14 @@ namespace kaon_reconstruction{
 	if(nhits_pdg_map.size()){
 	  for (map<int, int>::iterator it = nhits_pdg_map.begin(); it != nhits_pdg_map.end(); it++) {
 	    v.push_back({ it->second, it->first });
-	    cout << it->second << " " << it->first << endl;
+	    //cout << it->second << " " << it->first << endl;
 	  }
 	  sort(v.rbegin(), v.rend());
-	  rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
-
+	  rebdautrack_pdg[ntracks][n_recoRebDauTracks[ntracks]] = v[0].second;
+	  //rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
 	}
-
-	n_recoRebDauTracks[i]++;
+	n_recoRebDauTracks[ntracks]++;
+	//n_recoRebDauTracks[i]++;
 
       }
 
@@ -783,16 +798,21 @@ namespace kaon_reconstruction{
 
 	if(!rebuildTrackList_truepi.empty()){
 	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
+	  //rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
+	  rebdautracktrue_length[ntracks] = rebuildTrackList_truepi[0].Length();
 	  
 	  std::vector<TVector3> peakDirectionVector =  orchestrator_truepi.getPeakDirectionList();
 	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
+	  //best_peak_x_true[i] = peakDirectionVector[0].X(); 
+	  //best_peak_y_true[i] = peakDirectionVector[0].Y(); 
+	  //best_peak_z_true[i] = peakDirectionVector[0].Z(); 
+	  best_peak_x_true[ntracks] = peakDirectionVector[0].X(); 
+	  best_peak_y_true[ntracks] = peakDirectionVector[0].Y(); 
+	  best_peak_z_true[ntracks] = peakDirectionVector[0].Z(); 
 	  
 	  orchestrator_truepi.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
+	  //rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
+	  rebdautracktruedir_length[ntracks] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
 	  
 	}
 	
@@ -805,22 +825,29 @@ namespace kaon_reconstruction{
 	
 	if(!rebuildTrackList_truemu.empty()){
 	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
+	  //rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
+	  rebdautracktrue_length[ntracks] = rebuildTrackList_truemu[0].Length();
 	  
 	  std::vector<TVector3> peakDirectionVector =  orchestrator_truemu.getPeakDirectionList();
 	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
+	  //best_peak_x_true[i] = peakDirectionVector[0].X(); 
+	  //best_peak_y_true[i] = peakDirectionVector[0].Y(); 
+	  //best_peak_z_true[i] = peakDirectionVector[0].Z(); 
+	  best_peak_x_true[ntracks] = peakDirectionVector[0].X(); 
+	  best_peak_y_true[ntracks] = peakDirectionVector[0].Y(); 
+	  best_peak_z_true[ntracks] = peakDirectionVector[0].Z(); 
 	  
 	  orchestrator_truemu.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
+	  //rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
+	  rebdautracktruedir_length[ntracks] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
 	  
 	}
 
+	ntracks++;
 
-      }
+      }//end of n_recoTracks loop
        
+      reco_ntracks = ntracks;
 
       
     
