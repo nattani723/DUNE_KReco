@@ -1,0 +1,94 @@
+#include "calorimetry_dune10kt.fcl"
+#include "services_dune.fcl"
+#include "standard_reco_dune10kt.fcl"
+
+
+process_name: RunningKRcoAlg
+
+services:
+{
+  TFileService: { fileName: "running_Kreco_alg.root" }
+  TimeTracker:       {}
+  RandomNumberGenerator: {}
+  message: @local::standard_info
+  FileCatalogMetadata:  @local::art_file_catalog_mc
+                        @table::dunefd_simulation_services
+   @table::dunefd_reco_services
+
+  BackTrackerService: {
+    BackTracker: {
+      SimChannelModuleLabel: "elecDrift"
+      G4ModuleLabel: "largeant"
+      MinimumHitEnergyFraction: 1e-1
+    }
+  }
+}
+services.Geometry: @local::dune10kt_1x2x6_geo
+
+source:
+{
+  module_type: RootInput
+  firstEvent : 1
+  maxEvents: 10
+}
+
+physics:
+{
+    producers:
+    {	
+
+    RunningKRcoAlg:
+    {
+      module_type:      	"RunningKRcoAlg"
+      SaveHits:			false
+      MCgenieLabel:		"generator"
+      HitModuleLabelOLD:	 	"gaushit"
+      HitModuleLabel:	 	"hitfd"
+       HitSPAssns:		"hitfd"
+      HitTrackAssns:	 	"pandoraTrack"
+      TrackModuleLabel: 	"pandoraTrack"
+      PidModuleLabel: 	        "pandorapid"
+      CaloModuleLabel: 	        "pandoracalo"
+      OpFlashModuleLabel:	"opflash"
+      ShowerModuleLabel:        "pandoraShower"
+      NNetModuleLabel:          "emtrkmichelid:emtrkmichel"
+      SpacePointproducer:	"pandora"	
+      ExponentConstant:         0.42
+      MaxPIDAValue:		50.0
+      MinPIDAValue:		1.0
+      PidValue:		        0.1
+      CalorimetryAlg:           @local::dune10kt_calorimetryalgmc
+      View:			0
+      PointIDModuleLabel:       "decayid"
+      PIDA_endPoint:		30.0
+      FidVolCutX:		10.0
+      FidVolCutY:		10.0
+      FidVolCutZ:		10.0
+
+    }
+ 
+  }
+ 
+  analyzers:
+  {
+  }
+  
+   prod: [ RunningKRcoAlg ] //Directory for histograms
+
+   reco: [
+   ]
+
+   #define the output stream, there could be more than one if using filters
+   stream1:  [ out1 ]
+
+   #trigger_paths: [ reco ]
+
+   #end_paths: [ prod ]
+}
+
+#outputs:{}
+#physics.producers.gaushit.CalDataModuleLabel: "caldata"
+#physics.producers.pandora.HitFinderModuleLabel:             "hitpdune"
+#physics.producers.pandora.GeantModuleLabel:                 "tpcrawdecoder:simpleSC"
+services.BackTrackerService.BackTracker.SimChannelModuleLabel: "elecDrift"
+#physics.producers.gaushit.InputModule: "tpcrawdecoder:caldata"

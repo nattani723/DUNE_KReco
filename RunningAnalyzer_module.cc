@@ -50,7 +50,7 @@ namespace kaon_reconstruction{
     fMCgenieLabel = p.get<std::string>("MCgenieLabel");
     fSpacePointproducer  = p.get<std::string>("SpacePointproducer");
     fHitTrackAssns = p.get<std::string>("HitTrackAssns");
-    fHitTrackRecoAlgAssns = p.get<std::string>("HitTrackAssns");
+    fHitTrackRecoAlgAssns = p.get<std::string>("HitTrackRecoAlgAssns");
     fSaveHits = p.get<bool>("SaveHits");
     fExponentConstant  = p.get<double>("ExponentConstant");
     fMaxPIDAValue  = p.get<double>("MaxPIDAValue");
