@@ -452,7 +452,7 @@ namespace kaon_reconstruction{
     // get tracks with recoalg
     art::Handle< std::vector<recob::Track> > trackRecoAlgListHandle;
     std::vector<art::Ptr<recob::Track>> trackRecoAlglist;
-    if( event.getByLabel(fTrackModuleLabel, trackRecoAlgListHandle))
+    if( event.getByLabel(fTrackRecoAlgModuleLabel, trackRecoAlgListHandle))
       art::fill_ptr_vector(trackRecoAlglist, trackRecoAlgListHandle);
     n_recoTracks_RecoAlg = trackRecoAlglist.size();
     if( n_recoTracks_RecoAlg > MAX_TRACKS || n_recoTracks_RecoAlg == 0) {
@@ -567,7 +567,7 @@ namespace kaon_reconstruction{
       track_complet[i] = tmpComplet;
       //cout << "track_mcPDG[i]: " << track_mcPDG[i] << endl;
       //if(track_mcPDG[i]!=321) continue;
-      
+
       for(int j=0; j<n_recoTracks; ++j) {
 	
 	art::Ptr<recob::Track> dau_track = tracklist[j];
@@ -577,13 +577,13 @@ namespace kaon_reconstruction{
 	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
 						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
 						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
-	
+
 	if(track_dau_distance<15){
-	  
+
 	  dautrack_length[i][n_recoDauTracks[i]] = dau_track->Length();
 	  dautrack_mcPDG[i][n_recoDauTracks[i]] = track_mcPDG[j];
 	  dautrack_distance[i][n_recoDauTracks[i]] = track_dau_distance;
-	  
+
 	  const simb::MCParticle *mcparticle_dau;
 	  std::map<int,int> hits_pdg_map_dau;
 	  for(auto const& hit : track_hits.at(j)){
@@ -601,17 +601,15 @@ namespace kaon_reconstruction{
 	    
 	    sort(v.rbegin(), v.rend());
 	    dautrack_pdg[i][n_recoDauTracks[i]] = v[0].second;
-	    cout << "dautrack_pdg[i][n_recoDauTracks[i]]: " << v[0].second << endl;
 	  }
 	  n_recoDauTracks[i]++;
 	}
-	
-      }       
+      }     
 
       // loop for tracks reconstrcted by the algorithm
       for(int j=0; j<n_recoTracks_RecoAlg; ++j) {
 	
-	art::Ptr<recob::Track> dau_track = tracklist[j];
+	art::Ptr<recob::Track> dau_track = trackRecoAlglist[j];
 	
 	if(dau_track->ID() == track->ID()) continue;
 	
@@ -624,7 +622,7 @@ namespace kaon_reconstruction{
 	  dautrack_length_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_track->Length();
 	  //dautrack_mcPDG_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = track_mcPDG[j];
 	  dautrack_distance_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = track_dau_distance;
-	  
+
 	  const simb::MCParticle *mcparticle_dau;
 	  std::map<int,int> hits_pdg_map_dau;
 	  for(auto const& hit : track_hits_RecoAlg.at(j)){
@@ -634,7 +632,6 @@ namespace kaon_reconstruction{
 	    if(hits_pdg_map_dau.find(mcparticle_dau->PdgCode()) == hits_pdg_map_dau.end()) hits_pdg_map_dau[mcparticle_dau->PdgCode()] = 1;
 	    else hits_pdg_map_dau[mcparticle_dau->PdgCode()] += 1;
 	  }
-
 	  vector<pair<int, int>> v;
 	  if(hits_pdg_map_dau.size()){
 	    for (map<int, int>::iterator it = hits_pdg_map_dau.begin(); it != hits_pdg_map_dau.end(); it++)
@@ -642,9 +639,7 @@ namespace kaon_reconstruction{
 	    
 	    sort(v.rbegin(), v.rend());
 	    dautrack_pdg_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = v[0].second;
-	    cout << "dautrack_pdg[i][n_recoDauTracks[i]]: " << v[0].second << endl;
 	  }
-
 
 	  //calculate PID
 	  std::vector<const anab::Calorimetry*> trk_cal_RecoAlg = reco_cal_RecoAlg.at(j);
@@ -654,7 +649,7 @@ namespace kaon_reconstruction{
 	  int plane0=0; 
 	  int plane1=0;
 	  int plane2=0;
-	  
+
 	  for (size_t ipid = 0; ipid < trk_pid_RecoAlg.size(); ++ipid){
 	    if (!trk_pid_RecoAlg[ipid]->PlaneID().isValid) continue;
 	    int planenum = trk_pid_RecoAlg[ipid]->PlaneID().Plane;
@@ -710,7 +705,7 @@ namespace kaon_reconstruction{
 	    const vector<float> &dedx = trk_cal_RecoAlg[iplane]->dEdx();
 	    const vector<float> &resr = trk_cal_RecoAlg[iplane]->ResidualRange();
 	    const vector<float> &pitch = trk_cal_RecoAlg[iplane]->TrkPitchVec();
-	    auto &xyz = trk_cal_RecoAlg[iplane]->XYZ();
+	    //auto &xyz = trk_cal_RecoAlg[iplane]->XYZ();
 	    
 	    if (best_plane >= 0 && iplane == (unsigned)best_plane) {
 	      std::copy(dqdx.begin(), dqdx.end(), track_dQ_dx_RecoAlg[n_recoDauTracks_RecoAlg[i]]);
@@ -724,12 +719,14 @@ namespace kaon_reconstruction{
 	    std::copy(pitch.begin(), pitch.end(), track_pitch_byplane[n_recoDauTracks_RecoAlg[i]][iplane]);
 	    
 	    // save calo point's XYZ coords
+	    /*
 	    double* coords = (double*)track_calo_xyz_byplane_RecoAlg[n_recoDauTracks_RecoAlg[i]][iplane];
 	    for(int k = 0; k < npts; j++) {
 	      (coords+k*3)[0] = xyz[k].X();
 	      (coords+k*3)[1] = xyz[k].Y();
 	      (coords+k*3)[2] = xyz[k].Z();
 	    }
+	    */
 	  }
 
 	  //truth matcher
@@ -752,7 +749,6 @@ namespace kaon_reconstruction{
 	}
 	
       }       
-    
       
       // add track points
       n_track_points[i] = track->NPoints();
