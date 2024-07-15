@@ -290,9 +290,9 @@ private:
     double track_vtx[MAX_TRACKS][4];
     double track_end[MAX_TRACKS][4];
     double track_length[MAX_TRACKS];
-    double dautrack_length[MAX_TRACKS][10];
-    double dautrack_distance[MAX_TRACKS][10];
-    double dautrack_pdg[MAX_TRACKS][10];
+    double dau_track_length[MAX_TRACKS][10];
+    double dau_track_distance[MAX_TRACKS][10];
+    double dau_track_pdg[MAX_TRACKS][10];
     double best_peak_x[MAX_TRACKS][10];
     double best_peak_y[MAX_TRACKS][10];
     double best_peak_z[MAX_TRACKS][10];
@@ -302,31 +302,10 @@ private:
 
     int    n_recoTracks_RecoAlg;
     int    n_recoDauTracks_RecoAlg[MAX_TRACKS];
-    double dautrack_length_RecoAlg[MAX_TRACKS][10];
-    double dautrack_distance_RecoAlg[MAX_TRACKS][10];
-    double dautrack_pdg_RecoAlg[MAX_TRACKS][10];
-    int    dautrack_mcPDG_RecoAlg[MAX_TRACKS][10];
-
-    int    track_mcID_RecoAlg[MAX_TRACKS];
-    int    track_mcPDG_RecoAlg[MAX_TRACKS];
-    double track_Efrac_RecoAlg[MAX_TRACKS];
-    double track_complet_RecoAlg[MAX_TRACKS];
-    double track_PIDA_RecoAlg[MAX_TRACKS][3];
-    int    track_PID_pdg_RecoAlg[MAX_TRACKS][3];
-    double track_KE_RecoAlg[MAX_TRACKS][3];
-    int    track_bestplane_RecoAlg[MAX_TRACKS];
-    int    n_track_points_RecoAlg[MAX_TRACKS];
-    int    n_cal_points_RecoAlg[MAX_TRACKS];
-    int    n_cal_points_byplane_RecoAlg[MAX_TRACKS][3];
-    double track_dQ_dx_RecoAlg[MAX_TRACKS][MAX_CALO_PTS];
-    double track_dE_dx_RecoAlg[MAX_TRACKS][MAX_CALO_PTS];
-    double track_range_RecoAlg[MAX_TRACKS][MAX_CALO_PTS];
-    double track_pitch_RecoAlg[MAX_TRACKS][MAX_CALO_PTS];
-    double track_dQ_dx_byplane_RecoAlg[MAX_TRACKS][3][MAX_CALO_PTS];
-    double track_dE_dx_byplane_RecoAlg[MAX_TRACKS][3][MAX_CALO_PTS];
-    double track_range_byplane_RecoAlg[MAX_TRACKS][3][MAX_CALO_PTS];
-    double track_pitch_byplane_RecoAlg[MAX_TRACKS][3][MAX_CALO_PTS];
-    double track_calo_xyz_byplane_RecoAlg[MAX_TRACKS][3][MAX_CALO_PTS][3];
+    double dau_track_length_RecoAlg[MAX_TRACKS][10];
+    double dau_track_distance_RecoAlg[MAX_TRACKS][10];
+    double dau_track_pdg_RecoAlg[MAX_TRACKS][10];
+    //int    dau_track_mcPDG_RecoAlg[MAX_TRACKS][10];
 
     double track_dir_vtx[MAX_TRACKS][4];
     double track_PIDA[MAX_TRACKS][3];
@@ -338,7 +317,7 @@ private:
     double track_complet[MAX_TRACKS];
     int    track_mcID[MAX_TRACKS];
     int    track_mcPDG[MAX_TRACKS];
-    int    dautrack_mcPDG[MAX_TRACKS][10];
+    //int    dau_track_mcPDG[MAX_TRACKS][10];
     int    n_track_points[MAX_TRACKS];
     double track_point_xyz[MAX_TRACKS][MAX_CALO_PTS][3];
     int    n_cal_points[MAX_TRACKS];
@@ -352,6 +331,69 @@ private:
     double track_range_byplane[MAX_TRACKS][3][MAX_CALO_PTS];
     double track_pitch_byplane[MAX_TRACKS][3][MAX_CALO_PTS];
     double track_calo_xyz_byplane[MAX_TRACKS][3][MAX_CALO_PTS][3]; // storing xyz coordinates of all calo points
+
+    int    dau_track_mcID[MAX_TRACKS][10];
+    int    dau_track_mcPDG[MAX_TRACKS][10];
+    double dau_track_Efrac[MAX_TRACKS][10];
+    double dau_track_complet[MAX_TRACKS][10];
+    double dau_track_PIDA[MAX_TRACKS][10][3];
+    int    dau_track_PID_pdg[MAX_TRACKS][10][3];
+    double dau_track_KE[MAX_TRACKS][10][3];
+    int    dau_track_bestplane[MAX_TRACKS][10];
+    int    n_dau_track_points[MAX_TRACKS][10];
+    int    n_dau_cal_points[MAX_TRACKS][10];
+    int    n_dau_cal_points_byplane[MAX_TRACKS][10][3];
+    double dau_track_dQ_dx[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_dE_dx[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_range[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_pitch[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_dQ_dx_byplane[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_dE_dx_byplane[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_range_byplane[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_pitch_byplane[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_calo_xyz_byplane[MAX_TRACKS][10][3][MAX_CALO_PTS][3];
+
+    int    dau_track_mcID_RecoAlg[MAX_TRACKS][10];
+    int    dau_track_mcPDG_RecoAlg[MAX_TRACKS][10];
+    double dau_track_Efrac_RecoAlg[MAX_TRACKS][10];
+    double dau_track_complet_RecoAlg[MAX_TRACKS][10];
+    double dau_track_PIDA_RecoAlg[MAX_TRACKS][10][3];
+    int    dau_track_PID_pdg_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_KE_RecoAlg[MAX_TRACKS][10][3];
+    int    dau_track_bestplane_RecoAlg[MAX_TRACKS][10];
+    int    n_dau_track_points_RecoAlg[MAX_TRACKS][10];
+    int    n_dau_cal_points_RecoAlg[MAX_TRACKS][10];
+    int    n_dau_cal_points_byplane_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_dQ_dx_RecoAlg[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_dE_dx_RecoAlg[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_range_RecoAlg[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_pitch_RecoAlg[MAX_TRACKS][10][MAX_CALO_PTS];
+    double dau_track_dQ_dx_byplane_RecoAlg[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_dE_dx_byplane_RecoAlg[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_range_byplane_RecoAlg[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_pitch_byplane_RecoAlg[MAX_TRACKS][10][3][MAX_CALO_PTS];
+    double dau_track_calo_xyz_byplane_RecoAlg[MAX_TRACKS][10][3][MAX_CALO_PTS][3];
+
+    double track_chi_pr[MAX_TRACKS][3];
+    double track_chi_ka[MAX_TRACKS][3];
+    double track_chi_pi[MAX_TRACKS][3];
+    double track_chi_mu[MAX_TRACKS][3];
+    double track_pida[MAX_TRACKS][3];
+    double track_pidndf[MAX_TRACKS][3];
+
+    double dau_track_chi_pr[MAX_TRACKS][10][3];
+    double dau_track_chi_ka[MAX_TRACKS][10][3];
+    double dau_track_chi_pi[MAX_TRACKS][10][3];
+    double dau_track_chi_mu[MAX_TRACKS][10][3];
+    double dau_track_pida[MAX_TRACKS][10][3];
+    double dau_track_pidndf[MAX_TRACKS][10][3];
+
+    double dau_track_chi_pr_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_chi_ka_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_chi_pi_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_chi_mu_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_pida_RecoAlg[MAX_TRACKS][10][3];
+    double dau_track_pidndf_RecoAlg[MAX_TRACKS][10][3];
 
     int     n_recoHits;
     int     hit_channel[MAX_HITS];
@@ -479,3 +521,4 @@ private:
   DEFINE_ART_MODULE(RunningAnalyzer);
 }
 #endif
+
