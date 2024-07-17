@@ -195,10 +195,10 @@ namespace kaon_reconstruction{
     fEventTree->Branch("track_pitch", track_pitch,"track_pitch[n_reco_tracks][500]/D");
 
     fEventTree->Branch("n_cal_points_byplane", n_cal_points_byplane,"n_cal_points_byplane[n_reco_tracks][3]/I");
-    fEventTree->Branch("track_dQ_dx_byplane", track_dQ_dx_byplane,"track_dQ_dx_byplane[n_reco_tracks][500][3]/D");
-    fEventTree->Branch("track_dE_dx_byplane", track_dE_dx_byplane,"track_dE_dx_byplane[n_reco_tracks][500][3]/D");
-    fEventTree->Branch("track_range_byplane", track_range_byplane,"track_range_byplane[n_reco_tracks][500][3]/D");
-    fEventTree->Branch("track_pitch_byplane", track_pitch_byplane,"track_pitch_byplane[n_reco_tracks][500][3]/D");
+    fEventTree->Branch("track_dQ_dx_byplane", track_dQ_dx_byplane,"track_dQ_dx_byplane[n_reco_tracks][3][500]/D");
+    fEventTree->Branch("track_dE_dx_byplane", track_dE_dx_byplane,"track_dE_dx_byplane[n_reco_tracks][3][500]/D");
+    fEventTree->Branch("track_range_byplane", track_range_byplane,"track_range_byplane[n_reco_tracks][3][500]/D");
+    fEventTree->Branch("track_pitch_byplane", track_pitch_byplane,"track_pitch_byplane[n_reco_tracks][3][500]/D");
     fEventTree->Branch("track_calo_xyz_byplane", track_calo_xyz_byplane,"track_calo_xyz_byplane[n_reco_tracks][3][500][3]/D");
 
     fEventTree->Branch("track_complet", track_complet,"track_complet[n_reco_tracks]/D");  //track quality variable (completeness)

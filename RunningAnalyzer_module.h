@@ -293,6 +293,14 @@ private:
     double dau_track_length[MAX_TRACKS][10];
     double dau_track_distance[MAX_TRACKS][10];
     double dau_track_pdg[MAX_TRACKS][10];
+
+    int    n_recoRebDauTracks[MAX_TRACKS];
+    double rebdautrack_distance[MAX_TRACKS][10];
+    double rebdautracktrue_length[MAX_TRACKS];
+    double rebdautracktruedir_length[MAX_TRACKS];
+    double rebdautrack_length[MAX_TRACKS][10];
+    double rebdautrack_pdg[MAX_TRACKS][10];
+
     double best_peak_x[MAX_TRACKS][10];
     double best_peak_y[MAX_TRACKS][10];
     double best_peak_z[MAX_TRACKS][10];
@@ -307,7 +315,7 @@ private:
     double dau_track_pdg_RecoAlg[MAX_TRACKS][10];
     //int    dau_track_mcPDG_RecoAlg[MAX_TRACKS][10];
 
-    double track_dir_vtx[MAX_TRACKS][4];
+    //double track_dir_vtx[MAX_TRACKS][4];
     double track_PIDA[MAX_TRACKS][3];
     int	   track_PID_pdg[MAX_TRACKS][3];
     double track_KE[MAX_TRACKS][3];
@@ -334,6 +342,8 @@ private:
 
     int    dau_track_mcID[MAX_TRACKS][10];
     int    dau_track_mcPDG[MAX_TRACKS][10];
+    double dau_track_vtx[MAX_TRACKS][10][4];
+    double dau_track_end[MAX_TRACKS][10][4];
     double dau_track_Efrac[MAX_TRACKS][10];
     double dau_track_complet[MAX_TRACKS][10];
     double dau_track_PIDA[MAX_TRACKS][10][3];
@@ -355,6 +365,8 @@ private:
 
     int    dau_track_mcID_RecoAlg[MAX_TRACKS][10];
     int    dau_track_mcPDG_RecoAlg[MAX_TRACKS][10];
+    double dau_track_vtx_RecoAlg[MAX_TRACKS][10][4];
+    double dau_track_end_RecoAlg[MAX_TRACKS][10][4];
     double dau_track_Efrac_RecoAlg[MAX_TRACKS][10];
     double dau_track_complet_RecoAlg[MAX_TRACKS][10];
     double dau_track_PIDA_RecoAlg[MAX_TRACKS][10][3];

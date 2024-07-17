@@ -161,8 +161,8 @@ namespace kaon_reconstruction{
     fEventTree->Branch("n_decayVtx", &n_decayVtx);
     fEventTree->Branch("decayVtx", decayVtx,"decayVtx[n_decayVtx][3]/D");  //vertices found using decayID point Alg
     fEventTree->Branch("vtxID_trk", vtxID_trk,"vtxID_trk[n_reco_tracks][10]/I"); //track-vertex association
-    fEventTree->Branch("track_vtx", track_vtx,"track_vtx[n_reco_tracks][4]/D");
     fEventTree->Branch("track_vtxDir", track_vtxDir,"track_vtxDir[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_vtx", track_vtx,"track_vtx[n_reco_tracks][4]/D");
     fEventTree->Branch("track_end", track_end,"track_end[n_reco_tracks][4]/D");
     fEventTree->Branch("track_isContained", track_isContained,"track_isContained[n_reco_tracks]/I");
     fEventTree->Branch("track_ID", track_ID,"track_ID[n_reco_tracks]/I");
@@ -171,6 +171,9 @@ namespace kaon_reconstruction{
     fEventTree->Branch("dau_track_distance", dau_track_distance,"dau_track_distance[n_reco_tracks][10]/D");
     fEventTree->Branch("dau_track_pdg", dau_track_pdg,"dau_track_pdg[n_reco_tracks][10]/D");
     fEventTree->Branch("dau_track_mcPDG", dau_track_mcPDG,"dau_track_mcPDG[n_reco_tracks][10]/I");        //true MC PDG for a given daughter track
+    fEventTree->Branch("dau_track_vtx", dau_track_vtx,"dau_track_vtx[n_reco_tracks][10][4]/D");
+    fEventTree->Branch("dau_track_end", dau_track_end,"dau_track_end[n_reco_tracks][10][4]/D");
+
 
     fEventTree->Branch("n_reco_tracks_RecoAlg", &n_recoTracks_RecoAlg);
     fEventTree->Branch("n_reco_dautracks_RecoAlg", n_recoDauTracks_RecoAlg, "n_recoDauTracks_RecoAlg[n_reco_tracks]/I");
@@ -178,6 +181,15 @@ namespace kaon_reconstruction{
     fEventTree->Branch("dau_track_distance_RecoAlg", dau_track_distance_RecoAlg,"dau_track_distance_RecoAlg[n_reco_tracks][10]/D");
     fEventTree->Branch("dau_track_pdg_RecoAlg", dau_track_pdg_RecoAlg,"dau_track_pdg_RecoAlg[n_reco_tracks][10]/D");
     fEventTree->Branch("dau_track_mcPDG_RecoAlg", dau_track_mcPDG_RecoAlg,"dau_track_mcPDG_RecoAlg[n_reco_tracks][10]/I");
+    fEventTree->Branch("dau_track_vtx_RecoAlg", dau_track_vtx_RecoAlg,"dau_track_vtx_RecoAlg[n_reco_tracks][10][4]/D");
+    fEventTree->Branch("dau_track_end_RecoAlg", dau_track_end_RecoAlg,"dau_track_end_RecoAlg[n_reco_tracks][10][4]/D");
+
+    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/I");
+    fEventTree->Branch("rebdautrack_distance", rebdautrack_distance,"rebdautrack_distance[n_reco_tracks][10]/D");
+    fEventTree->Branch("rebdautracktrue_length", rebdautracktrue_length,"rebdautracktrue_length[n_reco_tracks]/D");
+    fEventTree->Branch("rebdautracktruedir_length", rebdautracktruedir_length,"rebdautracktruedir_length[n_reco_tracks]/D");
+    fEventTree->Branch("rebdautrack_length", rebdautrack_length,"rebdautrack_length[n_reco_tracks][10]/D");
+    fEventTree->Branch("rebdautrack_pdg", rebdautrack_pdg,"rebdautrack_pdg[n_reco_tracks][10]/D");
 
     fEventTree->Branch("best_peak_x", best_peak_x,"best_peak_x[n_reco_tracks][10]/D");
     fEventTree->Branch("best_peak_y", best_peak_y,"best_peak_y[n_reco_tracks][10]/D");
@@ -186,13 +198,13 @@ namespace kaon_reconstruction{
     fEventTree->Branch("best_peak_y_true", best_peak_y_true,"best_peak_y_true[n_reco_tracks]/D");  
     fEventTree->Branch("best_peak_z_true", best_peak_z_true,"best_peak_z_true[n_reco_tracks]/D");  
 
-    fEventTree->Branch("track_PIDA", track_PIDA,"track_PIDA[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_PIDA", track_PIDA,"track_PIDA[n_reco_tracks][3]/D");//
     fEventTree->Branch("track_PID_pdg", track_PID_pdg,"track_PID_pdg[n_reco_tracks][3]/I");
     fEventTree->Branch("track_KE", track_KE,"track_KE[n_reco_tracks][3]/D");
     fEventTree->Branch("track_Prange", track_Prange,"track_Prange[n_reco_tracks]/D");
     fEventTree->Branch("track_bestplane", track_bestplane,"track_bestplane[n_reco_tracks]/I");
     fEventTree->Branch("n_track_points", n_track_points,"n_track_points[n_reco_tracks]/I");
-    fEventTree->Branch("track_point_xyz", track_point_xyz,Form("track_point_xyz[n_reco_tracks][%d][3]/D",MAX_CALO_PTS));
+    fEventTree->Branch("track_point_xyz", track_point_xyz,"track_point_xyz[n_reco_tracks][500][3]/D");
 
     fEventTree->Branch("n_cal_points", n_cal_points,"n_cal_points[n_reco_tracks]/I");
     fEventTree->Branch("track_dQ_dx", track_dQ_dx,"track_dQ_dx[n_reco_tracks][500]/D");
@@ -201,11 +213,19 @@ namespace kaon_reconstruction{
     fEventTree->Branch("track_pitch", track_pitch,"track_pitch[n_reco_tracks][500]/D");
 
     fEventTree->Branch("n_cal_points_byplane", n_cal_points_byplane,"n_cal_points_byplane[n_reco_tracks][3]/I");
-    fEventTree->Branch("track_dQ_dx_byplane", track_dQ_dx_byplane,"track_dQ_dx_byplane[n_reco_tracks][500][3]/D");
-    fEventTree->Branch("track_dE_dx_byplane", track_dE_dx_byplane,"track_dE_dx_byplane[n_reco_tracks][500][3]/D");
-    fEventTree->Branch("track_range_byplane", track_range_byplane,"track_range_byplane[n_reco_tracks][500][3]/D");
-    fEventTree->Branch("track_pitch_byplane", track_pitch_byplane,"track_pitch_byplane[n_reco_tracks][500][3]/D");
+    fEventTree->Branch("track_dQ_dx_byplane", track_dQ_dx_byplane,"track_dQ_dx_byplane[n_reco_tracks][3][500]/D");
+    fEventTree->Branch("track_dE_dx_byplane", track_dE_dx_byplane,"track_dE_dx_byplane[n_reco_tracks][3][500]/D");
+    fEventTree->Branch("track_range_byplane", track_range_byplane,"track_range_byplane[n_reco_tracks][3][500]/D");
+    fEventTree->Branch("track_pitch_byplane", track_pitch_byplane,"track_pitch_byplane[n_reco_tracks][3][500]/D");
     fEventTree->Branch("track_calo_xyz_byplane", track_calo_xyz_byplane,"track_calo_xyz_byplane[n_reco_tracks][3][500][3]/D");
+
+    fEventTree->Branch("track_chi_pr", track_chi_pr, "track_chi_pr[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_chi_ka", track_chi_ka, "track_chi_ka[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_chi_pi", track_chi_pi, "track_chi_pi[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_chi_mu", track_chi_mu, "track_chi_mu[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_pida", track_pida, "track_pida[n_reco_tracks][3]/D");
+    fEventTree->Branch("track_pidndf", track_pidndf, "track_pidndf[n_reco_tracks][3]/D");
+
 
     fEventTree->Branch("dau_track_complet", dau_track_complet,"dau_track_complet[n_reco_tracks][10]/D");  //track quality variable (completeness)
     fEventTree->Branch("dau_track_Efrac", dau_track_Efrac,"dau_track_Efrac[n_reco_tracks][10]/D");        //track quality variable (purity)
@@ -223,11 +243,19 @@ namespace kaon_reconstruction{
     fEventTree->Branch("dau_track_dE_dx", dau_track_dE_dx,"dau_track_dE_dx[n_reco_tracks][10][500]/D");
     fEventTree->Branch("dau_track_range", dau_track_range,"dau_track_range[n_reco_tracks][10][500]/D");
     fEventTree->Branch("dau_track_pitch", dau_track_pitch,"dau_track_pitch[n_reco_tracks][10][500]/D");
-    fEventTree->Branch("dau_track_dQ_dx_byplane", dau_track_dQ_dx_byplane,"dau_track_dQ_dx_byplane[n_reco_tracks][10][500][3]/D");
-    fEventTree->Branch("dau_track_dE_dx_byplane", dau_track_dE_dx_byplane,"dau_track_dE_dx_byplane[n_reco_tracks][10][500][3]/D");
-    fEventTree->Branch("dau_track_range_byplane", dau_track_range_byplane,"dau_track_range_byplane[n_reco_tracks][10][500][3]/D");
-    fEventTree->Branch("dau_track_pitch_byplane", dau_track_pitch_byplane,"dau_track_pitch_byplane[n_reco_tracks][10][500][3]/D");
+    fEventTree->Branch("dau_track_dQ_dx_byplane", dau_track_dQ_dx_byplane,"dau_track_dQ_dx_byplane[n_reco_tracks][10][3][500]/D");
+    fEventTree->Branch("dau_track_dE_dx_byplane", dau_track_dE_dx_byplane,"dau_track_dE_dx_byplane[n_reco_tracks][10][3][500]/D");
+    fEventTree->Branch("dau_track_range_byplane", dau_track_range_byplane,"dau_track_range_byplane[n_reco_tracks][10][3][500]/D");
+    fEventTree->Branch("dau_track_pitch_byplane", dau_track_pitch_byplane,"dau_track_pitch_byplane[n_reco_tracks][10][3][500]/D");
     fEventTree->Branch("dau_track_calo_xyz_byplane", dau_track_calo_xyz_byplane,"dau_track_calo_xyz_byplane[n_reco_tracks][10][3][500][3]/D");
+
+    fEventTree->Branch("dau_track_chi_pr", dau_track_chi_pr, "dau_track_chi_pr[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_chi_ka", dau_track_chi_ka, "dau_track_chi_ka[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_chi_pi", dau_track_chi_pi, "dau_track_chi_pi[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_chi_mu", dau_track_chi_mu, "dau_track_chi_mu[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_pida", dau_track_pida, "dau_track_pida[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_pidndf", dau_track_pidndf, "dau_track_pidndf[n_reco_tracks][10][3]/D");
+
 
     fEventTree->Branch("dau_track_complet_RecoAlg", dau_track_complet_RecoAlg,"dau_track_complet_RecoAlg[n_reco_tracks][10]/D");  //track quality variable (completeness)
     fEventTree->Branch("dau_track_Efrac_RecoAlg", dau_track_Efrac_RecoAlg,"dau_track_Efrac_RecoAlg[n_reco_tracks][10]/D");        //track quality variable (purity)
@@ -245,11 +273,17 @@ namespace kaon_reconstruction{
     fEventTree->Branch("dau_track_dE_dx_RecoAlg", dau_track_dE_dx_RecoAlg,"dau_track_dE_dx_RecoAlg[n_reco_tracks][10][500]/D");
     fEventTree->Branch("dau_track_range_RecoAlg", dau_track_range_RecoAlg,"dau_track_range_RecoAlg[n_reco_tracks][10][500]/D");
     fEventTree->Branch("dau_track_pitch_RecoAlg", dau_track_pitch_RecoAlg,"dau_track_pitch_RecoAlg[n_reco_tracks][10][500]/D");
-    fEventTree->Branch("dau_track_dQ_dx_byplane_RecoAlg", dau_track_dQ_dx_byplane_RecoAlg,"dau_track_dQ_dx_byplane_RecoAlg[n_reco_tracks][10][500][3]/D");
-    fEventTree->Branch("dau_track_dE_dx_byplane_RecoAlg", dau_track_dE_dx_byplane_RecoAlg,"dau_track_dE_dx_byplane_RecoAlg[n_reco_tracks][10][500][3]/D");
-    fEventTree->Branch("dau_track_range_byplane_RecoAlg", dau_track_range_byplane_RecoAlg,"dau_track_range_byplane_RecoAlg[n_reco_tracks][10][500][3]/D");
-    fEventTree->Branch("dau_track_pitch_byplane_RecoAlg", dau_track_pitch_byplane_RecoAlg,"dau_track_pitch_byplane_RecoAlg[n_reco_tracks][10][500][3]/D");
+    fEventTree->Branch("dau_track_dQ_dx_byplane_RecoAlg", dau_track_dQ_dx_byplane_RecoAlg,"dau_track_dQ_dx_byplane_RecoAlg[n_reco_tracks][10][3][500]/D");
+    fEventTree->Branch("dau_track_dE_dx_byplane_RecoAlg", dau_track_dE_dx_byplane_RecoAlg,"dau_track_dE_dx_byplane_RecoAlg[n_reco_tracks][10][3][500]/D");
+    fEventTree->Branch("dau_track_range_byplane_RecoAlg", dau_track_range_byplane_RecoAlg,"dau_track_range_byplane_RecoAlg[n_reco_tracks][10][3][500]/D");
+    fEventTree->Branch("dau_track_pitch_byplane_RecoAlg", dau_track_pitch_byplane_RecoAlg,"dau_track_pitch_byplane_RecoAlg[n_reco_tracks][10][3][500]/D");
     fEventTree->Branch("dau_track_calo_xyz_byplane_RecoAlg", dau_track_calo_xyz_byplane_RecoAlg,"dau_track_calo_xyz_byplane_RecoAlg[n_reco_tracks][10][3][500][3]/D");
+    fEventTree->Branch("dau_track_chi_pr_RecoAlg", dau_track_chi_pr_RecoAlg, "dau_track_chi_pr_RecoAlg[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_chi_ka_RecoAlg", dau_track_chi_ka_RecoAlg, "dau_track_chi_ka_RecoAlg[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_chi_pi_RecoAlg", dau_track_chi_pi_RecoAlg, "dau_track_chi_pi_RecoAlg[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_chi_mu_RecoAlg", dau_track_chi_mu_RecoAlg, "dau_track_chi_mu_RecoAlg[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_pida_RecoAlg", dau_track_pida_RecoAlg, "dau_track_pida_RecoAlg[n_reco_tracks][10][3]/D");
+    fEventTree->Branch("dau_track_pidndf_RecoAlg", dau_track_pidndf_RecoAlg, "dau_track_pidndf_RecoAlg[n_reco_tracks][10][3]/D");
 
     fEventTree->Branch("track_complet", track_complet,"track_complet[n_reco_tracks]/D");  //track quality variable (completeness)
     fEventTree->Branch("track_Efrac", track_Efrac,"track_Efrac[n_reco_tracks]/D");        //track quality variable (purity)
@@ -648,6 +682,34 @@ namespace kaon_reconstruction{
 		if(planenum==2) plane2 = pScore.fNdf;
 	      }
 	      dau_track_PID_pdg[i][n_recoDauTracks[i]][ipid] = pScore.fAssumedPdg;
+
+	      for(auto pScore: pidScore){	    
+		
+		double chi2value = pScore.fValue;
+		
+		// PIDA is always the last one and ndf there is -9999  
+		if(pScore.fAssumedPdg != 0){
+		  dau_track_pidndf[i][n_recoDauTracks[i]][planenum] = pScore.fNdf; // This value is the same for each particle type, but different in each plane
+		}
+		switch(pScore.fAssumedPdg){
+		case 2212:
+		  dau_track_chi_pr[i][n_recoDauTracks[i]][planenum] = chi2value;
+		  break;
+		case 321:
+		  dau_track_chi_ka[i][n_recoDauTracks[i]][planenum] = chi2value;
+		  break;
+		case 211:
+		  dau_track_chi_pi[i][n_recoDauTracks[i]][planenum] = chi2value;
+		  break;
+		case 13:
+		  dau_track_chi_mu[i][n_recoDauTracks[i]][planenum] = chi2value;
+		  break;
+		case 0:
+		  dau_track_pida[i][n_recoDauTracks[i]][planenum] = chi2value; 
+		  break;      
+		}
+	      }	  
+
 	    }
 	  }
 
@@ -682,28 +744,46 @@ namespace kaon_reconstruction{
 	      n_dau_cal_points[i][n_recoDauTracks[i]] = npts;
 	    }
 
-	    n_dau_cal_points_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane] = npts;
+	    n_dau_cal_points_byplane[i][n_recoDauTracks[i]][iplane] = npts;
 	    
 	    const vector<float> &dqdx = trk_cal[iplane]->dQdx();
 	    const vector<float> &dedx = trk_cal[iplane]->dEdx();
 	    const vector<float> &resr = trk_cal[iplane]->ResidualRange();
 	    const vector<float> &pitch = trk_cal[iplane]->TrkPitchVec();
-	    //auto &xyz = trk_cal_RecoAlg[iplane]->XYZ();
+	    //auto &xyz = trk_cal[iplane]->XYZ();
 	    
+	    size_t n_dqdx  = std::min(dqdx.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	    size_t n_dedx  = std::min(dedx.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	    size_t n_resr  = std::min(resr.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	    size_t n_pitch = std::min(pitch.size(), static_cast<size_t>(MAX_CALO_PTS));
+
 	    if (best_plane >= 0 && iplane == (unsigned)best_plane) {
+	      /*
 	      std::copy(dqdx.begin(), dqdx.end(), dau_track_dQ_dx[i][n_recoDauTracks[i]]);
 	      std::copy(dedx.begin(), dedx.end(), dau_track_dE_dx[i][n_recoDauTracks[i]]);
 	      std::copy(resr.begin(), resr.end(), dau_track_range[i][n_recoDauTracks[i]]);
 	      std::copy(pitch.begin(), pitch.end(), dau_track_pitch[i][n_recoDauTracks[i]]);
+	      */
+
+	      std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  dau_track_dQ_dx[i][n_recoDauTracks[i]]);
+	      std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  dau_track_dE_dx[i][n_recoDauTracks[i]]);
+	      std::copy(resr.begin(),  resr.begin()  + n_resr,  dau_track_range[i][n_recoDauTracks[i]]);
+	      std::copy(pitch.begin(), pitch.begin() + n_pitch, dau_track_pitch[i][n_recoDauTracks[i]]);
 	    }
+	    /*
 	    std::copy(dqdx.begin(), dqdx.end(), dau_track_dQ_dx_byplane[i][n_recoDauTracks[i]][iplane]);
 	    std::copy(dedx.begin(), dedx.end(), dau_track_dE_dx_byplane[i][n_recoDauTracks[i]][iplane]);
 	    std::copy(resr.begin(), resr.end(), dau_track_range_byplane[i][n_recoDauTracks[i]][iplane]);
 	    std::copy(pitch.begin(), pitch.end(), dau_track_pitch_byplane[i][n_recoDauTracks[i]][iplane]);
+	    */
+	    std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  dau_track_dQ_dx_byplane[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  dau_track_dE_dx_byplane[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(resr.begin(),  resr.begin()  + n_resr,  dau_track_range_byplane[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(pitch.begin(), pitch.begin() + n_pitch, dau_track_pitch_byplane[i][n_recoDauTracks[i]][iplane]);
 	    
 	    // save calo point's XYZ coords
 	    /*
-	    double* coords = (double*)track_calo_xyz_byplane_RecoAlg[n_recoDauTracks_RecoAlg[i]][iplane];
+	    double* coords = (double*)track_calo_xyz_byplane[n_recoDauTracks[i]][iplane];
 	    for(int k = 0; k < npts; j++) {
 	      (coords+k*3)[0] = xyz[k].X();
 	      (coords+k*3)[1] = xyz[k].Y();
@@ -790,6 +870,34 @@ namespace kaon_reconstruction{
 		if(planenum==2) plane2 = pScore.fNdf;
 	      }
 	      dau_track_PID_pdg_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][ipid] = pScore.fAssumedPdg;
+
+	      for(auto pScore: pidScore){	    
+		
+		double chi2value = pScore.fValue;
+		
+		// PIDA is always the last one and ndf there is -9999  
+		if(pScore.fAssumedPdg != 0){
+		  dau_track_pidndf_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][planenum] = pScore.fNdf; // This value is the same for each particle type, but different in each plane
+		}
+		switch(pScore.fAssumedPdg){
+		case 2212:
+		  dau_track_chi_pr_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][planenum] = chi2value;
+		  break;
+		case 321:
+		  dau_track_chi_ka_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][planenum] = chi2value;
+		  break;
+		case 211:
+		  dau_track_chi_pi_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][planenum] = chi2value;
+		  break;
+		case 13:
+		  dau_track_chi_mu_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][planenum] = chi2value;
+		  break;
+		case 0:
+		  dau_track_pida_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][planenum] = chi2value; 
+		  break;      
+		}
+	      }	  
+
 	    }
 	  }
 
@@ -832,16 +940,34 @@ namespace kaon_reconstruction{
 	    const vector<float> &pitch = trk_cal_RecoAlg[iplane]->TrkPitchVec();
 	    //auto &xyz = trk_cal_RecoAlg[iplane]->XYZ();
 	    
+	    size_t n_dqdx  = std::min(dqdx.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	    size_t n_dedx  = std::min(dedx.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	    size_t n_resr  = std::min(resr.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	    size_t n_pitch = std::min(pitch.size(), static_cast<size_t>(MAX_CALO_PTS));
+	    
 	    if (best_plane >= 0 && iplane == (unsigned)best_plane) {
+	      /*
 	      std::copy(dqdx.begin(), dqdx.end(), dau_track_dQ_dx_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
 	      std::copy(dedx.begin(), dedx.end(), dau_track_dE_dx_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
 	      std::copy(resr.begin(), resr.end(), dau_track_range_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
 	      std::copy(pitch.begin(), pitch.end(), dau_track_pitch_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
+	      */
+
+	      std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  dau_track_dQ_dx_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
+	      std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  dau_track_dE_dx_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
+	      std::copy(resr.begin(),  resr.begin()  + n_resr,  dau_track_range_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
+	      std::copy(pitch.begin(), pitch.begin() + n_pitch, dau_track_pitch_RecoAlg[i][n_recoDauTracks_RecoAlg[i]]);
 	    }
+	    /*
 	    std::copy(dqdx.begin(), dqdx.end(), dau_track_dQ_dx_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
 	    std::copy(dedx.begin(), dedx.end(), dau_track_dE_dx_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
 	    std::copy(resr.begin(), resr.end(), dau_track_range_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
 	    std::copy(pitch.begin(), pitch.end(), dau_track_pitch_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
+	    */
+	    std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  dau_track_dQ_dx_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  dau_track_dE_dx_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(resr.begin(),  resr.begin()  + n_resr,  dau_track_range_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(pitch.begin(), pitch.begin() + n_pitch, dau_track_pitch_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
 	    
 	    // save calo point's XYZ coords
 	    /*
@@ -881,7 +1007,7 @@ namespace kaon_reconstruction{
 	// FIXME: get the track point coordinates!
 	recob::tracking::Point_t pos_point = track->TrajectoryPoint(ipt).position;
 	TVector3 pos(pos_point.x(),pos_point.y(),pos_point.z());
-	pos.GetXYZ(track_point_xyz[i][ipt]);
+	//pos.GetXYZ(track_point_xyz[i][ipt]);
       }
 
       track_ID[i] = track->ID();
@@ -924,33 +1050,26 @@ namespace kaon_reconstruction{
 	    
 	    // PIDA is always the last one and ndf there is -9999  
 	    if(pScore.fAssumedPdg != 0){
-	      cout << "pScore.fNdf: " << pScore.fNdf << endl;
 	      track_pidndf[i][planenum] = pScore.fNdf; // This value is the same for each particle type, but different in each plane
 	    }
 	    switch(pScore.fAssumedPdg){
 	    case 2212:
-	      cout << "Chi2 2212: " << chi2value << endl;
 	      track_chi_pr[i][planenum] = chi2value;
 	      break;
 	    case 321:
-	      cout << "Chi2 321: " << chi2value << endl;
 	      track_chi_ka[i][planenum] = chi2value;
 	      break;
 	    case 211:
-	      cout << "Chi2 211: " << chi2value << endl;
 	      track_chi_pi[i][planenum] = chi2value;
 	      break;
 	    case 13:
-	      cout << "Chi2 13: " << chi2value << endl;
 	      track_chi_mu[i][planenum] = chi2value;
 	      break;
 	    case 0:
-	      cout << "Chi2 0: " << chi2value << endl;
 	      track_pida[i][planenum] = chi2value; 
 	      break;      
 	    }
 	  }	  
-
 	  
 	}
       }
@@ -1000,26 +1119,47 @@ namespace kaon_reconstruction{
 	const vector<float> &dedx = trk_cal[iplane]->dEdx();
 	const vector<float> &resr = trk_cal[iplane]->ResidualRange();
 	const vector<float> &pitch = trk_cal[iplane]->TrkPitchVec();
-	auto &xyz = trk_cal[iplane]->XYZ();
+	//auto &xyz = trk_cal[iplane]->XYZ();
+	
+	size_t n_dqdx  = std::min(dqdx.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	size_t n_dedx  = std::min(dedx.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	size_t n_resr  = std::min(resr.size(),  static_cast<size_t>(MAX_CALO_PTS));
+	size_t n_pitch = std::min(pitch.size(), static_cast<size_t>(MAX_CALO_PTS));
 
 	if (best_plane >= 0 && iplane == (unsigned)best_plane) {
+	  /*
 	  std::copy(dqdx.begin(), dqdx.end(), track_dQ_dx[i]);
 	  std::copy(dedx.begin(), dedx.end(), track_dE_dx[i]);
 	  std::copy(resr.begin(), resr.end(), track_range[i]);
 	  std::copy(pitch.begin(), pitch.end(), track_pitch[i]);
+	  */
+
+	  std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  track_dQ_dx[i]);
+	  std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  track_dE_dx[i]);
+	  std::copy(resr.begin(),  resr.begin()  + n_resr,  track_range[i]);
+	  std::copy(pitch.begin(), pitch.begin() + n_pitch, track_pitch[i]);
 	}
+	/*
 	std::copy(dqdx.begin(), dqdx.end(), track_dQ_dx_byplane[i][iplane]);
 	std::copy(dedx.begin(), dedx.end(), track_dE_dx_byplane[i][iplane]);
 	std::copy(resr.begin(), resr.end(), track_range_byplane[i][iplane]);
 	std::copy(pitch.begin(), pitch.end(), track_pitch_byplane[i][iplane]);
+	*/
+	std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  track_dQ_dx_byplane[i][iplane]);
+	std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  track_dE_dx_byplane[i][iplane]);
+	std::copy(resr.begin(),  resr.begin()  + n_resr,  track_range_byplane[i][iplane]);
+	std::copy(pitch.begin(), pitch.begin() + n_pitch, track_pitch_byplane[i][iplane]);
 
 	// save calo point's XYZ coords
+	/*
 	double* coords = (double*)track_calo_xyz_byplane[i][iplane];
 	for(int j = 0; j < npts; j++) {
 	  (coords+j*3)[0] = xyz[j].X();
 	  (coords+j*3)[1] = xyz[j].Y();
 	  (coords+j*3)[2] = xyz[j].Z();
 	}
+	*/
+
       }     
     } // end of track loop
 
@@ -1369,6 +1509,13 @@ namespace kaon_reconstruction{
     std::memset( dau_track_pdg_RecoAlg, 0, sizeof(dau_track_pdg_RecoAlg) );
     std::memset( dau_track_mcPDG_RecoAlg, 0, sizeof(dau_track_mcPDG_RecoAlg) );
 
+    std::memset( n_recoRebDauTracks, 0, sizeof(n_recoRebDauTracks) );
+    std::memset( rebdautracktrue_length, 0, sizeof(rebdautracktrue_length) );
+    std::memset( rebdautracktruedir_length, 0, sizeof(rebdautracktruedir_length) );
+    std::memset( rebdautrack_length, 0, sizeof(rebdautrack_length) );
+    std::memset( rebdautrack_distance, 0, sizeof(rebdautrack_distance) );
+    std::memset( rebdautrack_pdg, 0, sizeof(rebdautrack_pdg) );
+
     std::memset( best_peak_x, 0, sizeof(best_peak_x) );
     std::memset( best_peak_y, 0, sizeof(best_peak_y) );
     std::memset( best_peak_z, 0, sizeof(best_peak_z) );
@@ -1392,6 +1539,12 @@ namespace kaon_reconstruction{
     std::memset( dau_track_dE_dx, 0, sizeof(dau_track_dE_dx) );
     std::memset( dau_track_range, 0, sizeof(dau_track_range) );
     std::memset( dau_track_pitch, 0, sizeof(dau_track_pitch) );
+    std::memset( dau_track_chi_pr, 0, sizeof(dau_track_chi_pr) );
+    std::memset( dau_track_chi_ka, 0, sizeof(dau_track_chi_ka) );
+    std::memset( dau_track_chi_pi, 0, sizeof(dau_track_chi_pi) );
+    std::memset( dau_track_chi_mu, 0, sizeof(dau_track_chi_mu) );
+    std::memset( dau_track_pida, 0, sizeof(dau_track_pida) );
+    std::memset( dau_track_pidndf, 0, sizeof(dau_track_pidndf) ); 
     std::memset( dau_track_dQ_dx_byplane, 0, sizeof(dau_track_dQ_dx_byplane) );
     std::memset( dau_track_dE_dx_byplane, 0, sizeof(dau_track_dE_dx_byplane) );
     std::memset( dau_track_range_byplane, 0, sizeof(dau_track_range_byplane) );
@@ -1412,12 +1565,18 @@ namespace kaon_reconstruction{
     std::memset( dau_track_dE_dx_RecoAlg, 0, sizeof(dau_track_dE_dx_RecoAlg) );
     std::memset( dau_track_range_RecoAlg, 0, sizeof(dau_track_range_RecoAlg) );
     std::memset( dau_track_pitch_RecoAlg, 0, sizeof(dau_track_pitch_RecoAlg) );
+    std::memset( dau_track_chi_pr_RecoAlg, 0, sizeof(dau_track_chi_pr_RecoAlg) );
+    std::memset( dau_track_chi_ka_RecoAlg, 0, sizeof(dau_track_chi_ka_RecoAlg) );
+    std::memset( dau_track_chi_pi_RecoAlg, 0, sizeof(dau_track_chi_pi_RecoAlg) );
+    std::memset( dau_track_chi_mu_RecoAlg, 0, sizeof(dau_track_chi_mu_RecoAlg) );
+    std::memset( dau_track_pida_RecoAlg, 0, sizeof(dau_track_pida_RecoAlg) );
+    std::memset( dau_track_pidndf_RecoAlg, 0, sizeof(dau_track_pidndf) );
     std::memset( dau_track_dQ_dx_byplane_RecoAlg, 0, sizeof(dau_track_dQ_dx_byplane_RecoAlg) );
     std::memset( dau_track_dE_dx_byplane_RecoAlg, 0, sizeof(dau_track_dE_dx_byplane_RecoAlg) );
     std::memset( dau_track_range_byplane_RecoAlg, 0, sizeof(dau_track_range_byplane_RecoAlg) );
     std::memset( dau_track_pitch_byplane_RecoAlg, 0, sizeof(dau_track_pitch_byplane_RecoAlg) );
 
-    std::memset( track_dir_vtx, 0, sizeof(track_dir_vtx) );
+    //std::memset( track_dir_vtx, 0, sizeof(track_dir_vtx) );
     std::memset( track_PIDA, 0, sizeof(track_PIDA) );
     std::memset( track_PID_pdg, 0, sizeof(track_PID_pdg) );
     std::memset( track_KE, 0, sizeof(track_KE) );
@@ -1440,6 +1599,13 @@ namespace kaon_reconstruction{
     std::memset( track_dE_dx_byplane, 0, sizeof(track_dE_dx_byplane) );
     std::memset( track_range_byplane, 0, sizeof(track_range_byplane) );
     std::memset( track_pitch_byplane, 0, sizeof(track_pitch_byplane) );
+    std::memset( track_chi_pr, 0, sizeof(track_chi_pr) );
+    std::memset( track_chi_ka, 0, sizeof(track_chi_ka) );
+    std::memset( track_chi_pi, 0, sizeof(track_chi_pi) );
+    std::memset( track_chi_mu, 0, sizeof(track_chi_mu) );
+    std::memset( track_pida, 0, sizeof(track_pida) );
+    std::memset( track_pidndf, 0, sizeof(track_pidndf) ); 
+
 
     n_recoHits = 0;
     std::memset( hit_channel, 0, sizeof(hit_channel) );
