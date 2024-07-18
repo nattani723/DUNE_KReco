@@ -607,8 +607,8 @@ namespace kaon_reconstruction{
 		   track->End().y(),
 		   track->End().z());
 
-      cout << "track_vtx: "  << track_vtx[i][0] << " " << track_vtx[i][1] << " " << track_vtx[i][2]  << endl;
-      cout << "track_end: " << track_end[i][0] << " " << track_end[i][1] << " " << track_end[i][2] << endl;
+      //cout << "track_vtx: "  << track_vtx[i][0] << " " << track_vtx[i][1] << " " << track_vtx[i][2]  << endl;
+      //cout << "track_end: " << track_end[i][0] << " " << track_end[i][1] << " " << track_end[i][2] << endl;
 
       //truth matcher
       
@@ -815,6 +815,7 @@ namespace kaon_reconstruction{
 
 
       // loop for tracks reconstrcted by the algorithm
+      std::cout << "n_recoTracks_RecoAlg: " << n_recoTracks_RecoAlg << std::endl;
       for(int j=0; j<n_recoTracks_RecoAlg; ++j) {
 	
 	art::Ptr<recob::Track> dau_track = trackRecoAlglist[j];
@@ -827,6 +828,7 @@ namespace kaon_reconstruction{
 	
 	if(track_dau_distance<15){
 	  
+	  std::cout << "dau_track_length_RecoAlg: " << dau_track->Length() << std::endl;
 	  dau_track_length_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_track->Length();
 	  dau_track_distance_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = track_dau_distance;
 
@@ -1435,10 +1437,6 @@ namespace kaon_reconstruction{
     double x = vertex[0];
     double y = vertex[1];
     double z = vertex[2];
-
-    cout << "FidVolXmin: " << fFidVolXmin << ", fFidVolXmax: " << fFidVolXmax << ", X: " << x << endl;
-    cout << "FidVolYmin: " << fFidVolYmin << ", fFidVolYmax: " << fFidVolYmax << ", Y: " << y << endl;
-    cout << "FidVolZmin: " << fFidVolZmin << ", fFidVolZmax: " << fFidVolZmax << ", Z: " << z << endl;
 
     if (x>fFidVolXmin && x<fFidVolXmax&&
 	y>fFidVolYmin && y<fFidVolYmax&&
