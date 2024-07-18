@@ -568,8 +568,10 @@ namespace kaon_reconstruction{
     // loop reco tracks
     for(int i=0; i<n_recoTracks; ++i) {
 
-      art::Ptr<recob::Track> track = tracklist[i];
       n_recoDauTracks[i] = 0;
+      n_recoDauTracks_RecoAlg[i] = 0;
+
+      art::Ptr<recob::Track> track = tracklist[i];
 
       //vtx associations
       std::vector<art::Ptr<recob::Vertex>> vtxs = trk_from_vtx.at(i);
@@ -964,10 +966,10 @@ namespace kaon_reconstruction{
 	    std::copy(resr.begin(), resr.end(), dau_track_range_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
 	    std::copy(pitch.begin(), pitch.end(), dau_track_pitch_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
 	    */
-	    std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  dau_track_dQ_dx_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
-	    std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  dau_track_dE_dx_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
-	    std::copy(resr.begin(),  resr.begin()  + n_resr,  dau_track_range_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
-	    std::copy(pitch.begin(), pitch.begin() + n_pitch, dau_track_pitch_byplane_RecoAlg[i][n_recoDauTracks[i]][iplane]);
+	    std::copy(dqdx.begin(),  dqdx.begin()  + n_dqdx,  dau_track_dQ_dx_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
+	    std::copy(dedx.begin(),  dedx.begin()  + n_dedx,  dau_track_dE_dx_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
+	    std::copy(resr.begin(),  resr.begin()  + n_resr,  dau_track_range_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
+	    std::copy(pitch.begin(), pitch.begin() + n_pitch, dau_track_pitch_byplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]][iplane]);
 	    
 	    // save calo point's XYZ coords
 	    /*
