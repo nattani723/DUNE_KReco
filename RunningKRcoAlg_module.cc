@@ -435,63 +435,35 @@ void RunningKRcoAlg::produce(art::Event & event)
     
     TVector3 end(track->End().x(),track->End().y(),track->End().z());
     
-    for(int j=0; j<n_recoTracks; ++j) {
+    std::vector<art::Ptr<recob::Hit>> hits_from_track = track_hits.at(i);
 
-      std::vector<art::Ptr<recob::Hit>> hits_from_track = track_hits.at(i);
+    ReconstructionOrchestrator orchestrator;
+    orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
+    std::cout << "escaped reconstruction" << std::endl;
 
-      ReconstructionOrchestrator orchestrator;
-      orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-      std::cout << "escaped reconstruction" << std::endl;
-
-      std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
-      std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
+    std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
+    std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
 
       for(unsigned int j=0; j < rebuildTrackList.size(); j++) {
 	
-	const std::vector<TVector3> peakDirectionVector = orchestrator.getPeakDirectionList();
-
-	/*
-	if(trackHitLists[j].empty()){
-	  event.put(std::move(anaTrackCollection));
-	  event.put(std::move(anaTrackHitAssociations));
-	  continue;
-	}
-	*/
-
-	TVector3 pos(rebuildTrackList[j].Vertex().X(),rebuildTrackList[j].Vertex().Y(),rebuildTrackList[j].Vertex().Z());
-
-	double track_dau_distance=TMath::Sqrt((end.X()-pos.X())*(end.X()-pos.X()) +
-					      (end.Y()-pos.Y())*(end.Y()-pos.Y()) +
-					      (end.Z()-pos.Z())*(end.Z()-pos.Z()));
-
-	/*
-	if (track_dau_distance>10){
-	  event.put(std::move(anaTrackCollection));
-	  event.put(std::move(anaTrackHitAssociations));	
-	  continue;
-	}
-	*/
-	std::cout << track_dau_distance << std::endl;
+	if(trackHitLists[j].empty()) continue;
 
 	anaTrackCollection->push_back(rebuildTrackList[j]);
-	
 	std::vector<art::Ptr<recob::Hit>> hits_from_track_rebuild = trackHitLists[j];
-	
+
 	lar_pandora::HitVector anaHitCollection_rebuild_tmp;
 	for(auto hitptr : hits_from_track_rebuild){
 	  anaHitCollection_rebuild_tmp.push_back(hitptr);
 	}
-	
+
 	util::CreateAssn(*this, event, *(anaTrackCollection.get()), anaHitCollection_rebuild_tmp, *(anaTrackHitAssociations.get()));
-	
+
       }
-    }
-    std::cout << i << std::endl;
   }
-    event.put(std::move(anaTrackCollection));
-    event.put(std::move(anaTrackHitAssociations));
-
+  event.put(std::move(anaTrackCollection));
+  event.put(std::move(anaTrackHitAssociations));
 }
 
-DEFINE_ART_MODULE(RunningKRcoAlg)
+  DEFINE_ART_MODULE(RunningKRcoAlg)
 }
+
