@@ -457,7 +457,7 @@ void RunningKRcoAlg::produce(art::Event & event)
 	}
 
 	util::CreateAssn(*this, event, *(anaTrackCollection.get()), anaHitCollection_rebuild_tmp, *(anaTrackHitAssociations.get()));
-
+	
       }
   }
   event.put(std::move(anaTrackCollection));

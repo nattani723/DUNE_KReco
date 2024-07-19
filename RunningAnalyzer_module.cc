@@ -799,7 +799,8 @@ namespace kaon_reconstruction{
 	  double dau_tmpEfrac = 0;
 	  const simb::MCParticle *dau_particle;
 	  double dau_tmpComplet = 0;
-	  std::vector<art::Ptr<recob::Hit>> dau_all_trackHits = track_hits.at(i);
+	  //std::vector<art::Ptr<recob::Hit>> dau_all_trackHits = track_hits.at(i);
+	  std::vector<art::Ptr<recob::Hit>> dau_all_trackHits = track_hits.at(j);
 	  truthMatcher( all_hits,  dau_all_trackHits, dau_particle, dau_tmpEfrac, dau_tmpComplet );
 	  if(!dau_particle) continue;
 	  dau_track_mcID[i][n_recoDauTracks[i]] = dau_particle->TrackId();
@@ -820,13 +821,13 @@ namespace kaon_reconstruction{
 	
 	art::Ptr<recob::Track> dau_track = trackRecoAlglist[j];
 	
-	if(dau_track->ID() == track->ID()) continue;
+	//if(dau_track->ID() == track->ID()) continue;
 	
 	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
 						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
 						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
 	
-	if(track_dau_distance<15){
+	//if(track_dau_distance<15){
 	  
 	  std::cout << "dau_track_length_RecoAlg: " << dau_track->Length() << std::endl;
 	  dau_track_length_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_track->Length();
@@ -926,7 +927,7 @@ namespace kaon_reconstruction{
 	    idx++;
 	  }
 	  dau_track_bestplane_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = best_plane;
-	  
+
 	  //save dE/dx & dQ/dx
 	  for (unsigned iplane = 0; iplane < 3; iplane++ ) {
 	    int npts = trk_cal_RecoAlg[iplane]->dEdx().size();
@@ -989,9 +990,10 @@ namespace kaon_reconstruction{
 	  double dau_tmpEfrac_RecoAlg = 0;
 	  const simb::MCParticle *dau_particle_RecoAlg;
 	  double dau_tmpComplet_RecoAlg = 0;
-	  std::vector<art::Ptr<recob::Hit>> dau_all_trackHits_RecoAlg = track_hits_RecoAlg.at(i);
+	  std::vector<art::Ptr<recob::Hit>> dau_all_trackHits_RecoAlg = track_hits_RecoAlg.at(j);
 	  truthMatcher( all_hits,  dau_all_trackHits_RecoAlg, dau_particle_RecoAlg, dau_tmpEfrac_RecoAlg, dau_tmpComplet_RecoAlg );
 	  if(!dau_particle_RecoAlg) continue;
+
 	  dau_track_mcID_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_particle_RecoAlg->TrackId();
 	  dau_track_mcPDG_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_particle_RecoAlg->PdgCode();
 	  dau_track_Efrac_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_tmpEfrac_RecoAlg;
@@ -1001,7 +1003,7 @@ namespace kaon_reconstruction{
 
 	  //n_recoDauTracks_RecoAlg[i]
 	  n_recoDauTracks_RecoAlg[i]++;
-	}
+	  //}
 	
       }       
       
@@ -1021,7 +1023,6 @@ namespace kaon_reconstruction{
       //check if the track ends within the FV
       if( track_isInside ) track_isContained[i] =1;
       else track_isContained[i] =0;
-
 
       //calculate PID
       std::vector<const anab::Calorimetry*> trk_cal = reco_cal.at(i);
