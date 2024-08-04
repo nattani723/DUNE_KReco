@@ -54,10 +54,14 @@ physics:
       ShowerModuleLabel:        "pandoraShower"
       NNetModuleLabel:          "emtrkmichelid:emtrkmichel"
       SpacePointproducer:	"pandora"	
-      HitTrackRecoAlgAssns:	"RunningKRcoAlg"
-      TrackRecoAlgModuleLabel: 	"RunningKRcoAlg"
-      PidRecoAlgModuleLabel:    "RunningKRcoAlg"
-      CaloRecoAlgModuleLabel:   "RunningKRcoAlg"
+      HitTrackRecoAlgAssns:	"RunningProducerwKAlg"
+      TrackRecoAlgModuleLabel: 	"RunningProducerwKAlg"
+      PidRecoAlgModuleLabel:    "pandorapidReRun"
+      CaloRecoAlgModuleLabel:   "pandoracaloReRun"
+      #HitTrackRecoAlgAssns:	"RunningKRcoAlg"
+      #TrackRecoAlgModuleLabel: 	"RunningKRcoAlg"
+      #PidRecoAlgModuleLabel:    "RunningKRcoAlg"
+      #CaloRecoAlgModuleLabel:   "RunningKRcoAlg"
       ExponentConstant:         0.42
       MaxPIDAValue:		50.0
       MinPIDAValue:		1.0
