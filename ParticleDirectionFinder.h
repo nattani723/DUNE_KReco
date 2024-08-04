@@ -53,6 +53,7 @@ namespace kaon_reconstruction
     typedef std::map<int, std::map<int, double>> AngularDistribution3DMap;
 
     pandora::StatusCode Run(const SPList& sp_list, const art::Ptr<recob::Track> primary_track, const  HitList& unavailable_hit_list, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, std::vector<TVector3> &peak_direction_vector);
+    pandora::StatusCode Run(const SPList& sp_list, const art::Ptr<recob::Track> primary_track, const  HitList& unavailable_hit_list, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, std::vector<TVector3> &peak_direction_vector, const std::string& roi_centre);
     float get_theta_bin_size() const;
     float get_phi_bin_size() const;
 
@@ -217,6 +218,60 @@ namespace kaon_reconstruction
       sp_list_peak_search = sp_list_peak_search_vtx;
     }else
       sp_list_peak_search = sp_list_peak_search_end;
+				  
+    if (sp_list_peak_search.empty())
+      return STATUS_CODE_NOT_FOUND;
+
+    // Fill angular distribution map
+    AngularDistribution3DMap angular_distribution_map;
+    //this->fill_angular_distribution_map(sp_list_roi, k_end, angular_distribution_map);
+    this->fill_angular_distribution_map(sp_list_peak_search, k_end, angular_distribution_map);
+
+    if (angular_distribution_map.empty())
+      return STATUS_CODE_NOT_FOUND;
+
+    // Smooth angular decomposition map
+    this->smooth_angular_distribution_map(angular_distribution_map);
+
+    // Store peaks into map from highest to lowest
+    std::map<double, TVector3, std::greater<>> sort_peak_direction_map;
+    this->retrieve_peak_directions(angular_distribution_map, sort_peak_direction_map);
+
+    if(sort_peak_direction_map.empty())
+      return STATUS_CODE_NOT_FOUND;
+
+    // Get vector of peak directions
+    this->refine_peak_directions(sort_peak_direction_map, peak_direction_vector);
+
+    if(peak_direction_vector.empty())
+      return STATUS_CODE_NOT_FOUND;
+
+    return STATUS_CODE_SUCCESS;
+  }
+
+  //------------------------------------------------------------------------------------------------------------------------------------------
+
+  pandora::StatusCode ParticleDirectionFinder::Run(const SPList& sp_list, const art::Ptr<recob::Track> primary_track,  const HitList& unavailable_hit_list, const std::map<art::Ptr<recob::SpacePoint>, art::Ptr<recob::Hit>>& spacepointToHitMap, std::vector<TVector3> &peak_direction_vector, const std::string& roi_centre)
+  {
+
+    this->clearData();
+
+    //get coordinates of k track end and store unavailable_hit_list
+    if(roi_centre=="end")
+      k_end.SetXYZ(primary_track->End().x(), primary_track->End().y(), primary_track->End().z());
+    if(roi_centre=="vtx")
+      k_end.SetXYZ(primary_track->Vertex().x(), primary_track->Vertex().y(), primary_track->Vertex().z());
+
+    // get sp list inside region of interest
+    this->collect_sp_in_roi(sp_list, k_end, m_region_of_interest, sp_list_roi, unavailable_hit_list, spacepointToHitMap);
+
+    if (sp_list_roi.empty())
+      return STATUS_CODE_NOT_FOUND;
+
+    // get sp list for peak finder
+    SPList sp_list_peak_search;
+
+    this->collect_sp_in_roi(sp_list_roi, k_end, m_peak_search_region, sp_list_peak_search, unavailable_hit_list, spacepointToHitMap);
 				  
     if (sp_list_peak_search.empty())
       return STATUS_CODE_NOT_FOUND;
