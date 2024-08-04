@@ -512,7 +512,7 @@ namespace kaon_reconstruction{
     n_recoTracks_RecoAlg = trackRecoAlglist.size();
     if( n_recoTracks_RecoAlg > MAX_TRACKS || n_recoTracks_RecoAlg == 0) {
       n_recoTracks_RecoAlg = 0; // make sure we don't save any fake data
-      return;
+      //return;
     }
 
     // get vtx related to track?
@@ -630,12 +630,17 @@ namespace kaon_reconstruction{
 	art::Ptr<recob::Track> dau_track = tracklist[j];
 	
 	if(dau_track->ID() == track->ID()) continue;
-	
+	if(track->Length()>dau_track->Length()) continue; //avoid duplicating primary-daughter tracks pairs
+
+	/*
 	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
 						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
 						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
+	*/
+	double track_dau_distance = CalculateTrackDauDistance(track,dau_track);
 
 	if(track_dau_distance<15){
+
 
 	  dau_track_length[i][n_recoDauTracks[i]] = dau_track->Length();
 	  //dau_track_mcPDG[i][n_recoDauTracks[i]] = track_mcPDG[n_recoDauTracks[i]];
@@ -819,18 +824,26 @@ namespace kaon_reconstruction{
       std::cout << "n_recoTracks_RecoAlg: " << n_recoTracks_RecoAlg << std::endl;
       for(int j=0; j<n_recoTracks_RecoAlg; ++j) {
 	
-	art::Ptr<recob::Track> dau_track = trackRecoAlglist[j];
+	art::Ptr<recob::Track> dau_track_recoalg = trackRecoAlglist[j];
 	
 	//if(dau_track->ID() == track->ID()) continue;
 	
-	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
-						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
-						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
+	double track_end_dau_distance = TMath::Sqrt((track->End().x()-dau_track_recoalg->Vertex().x())*(track->End().x()-dau_track_recoalg->Vertex().x()) +
+						    (track->End().y()-dau_track_recoalg->Vertex().y())*(track->End().y()-dau_track_recoalg->Vertex().y()) +
+						    (track->End().z()-dau_track_recoalg->Vertex().z())*(track->End().z()-dau_track_recoalg->Vertex().z()));
+
+	double track_vtx_dau_distance = TMath::Sqrt((track->Vertex().x()-dau_track_recoalg->Vertex().x())*(track->Vertex().x()-dau_track_recoalg->Vertex().x()) +
+						    (track->Vertex().y()-dau_track_recoalg->Vertex().y())*(track->Vertex().y()-dau_track_recoalg->Vertex().y()) +
+						    (track->Vertex().z()-dau_track_recoalg->Vertex().z())*(track->Vertex().z()-dau_track_recoalg->Vertex().z()));
+
+	double track_dau_distance = (track_end_dau_distance < track_vtx_dau_distance) ? track_end_dau_distance : track_vtx_dau_distance;
+	std::cout << "outside dau_track_length_RecoAlg: " << dau_track_recoalg->Length() << std::endl;
+	std::cout << "track_dau_distance: " << track_dau_distance << std::endl;
 	
-	//if(track_dau_distance<15){
+	if(track_dau_distance<15){
 	  
-	  std::cout << "dau_track_length_RecoAlg: " << dau_track->Length() << std::endl;
-	  dau_track_length_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_track->Length();
+	  std::cout << "inside dau_track_length_RecoAlg: " << dau_track_recoalg->Length() << std::endl;
+	  dau_track_length_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = dau_track_recoalg->Length();
 	  dau_track_distance_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = track_dau_distance;
 
 	  const simb::MCParticle *mcparticle_dau;
@@ -1003,7 +1016,7 @@ namespace kaon_reconstruction{
 
 	  //n_recoDauTracks_RecoAlg[i]
 	  n_recoDauTracks_RecoAlg[i]++;
-	  //}
+	  }
 	
       }       
       
@@ -1167,6 +1180,23 @@ namespace kaon_reconstruction{
 
       }     
     } // end of track loop
+
+
+    for (int i = 0; i < n_recoTracks; i++) { 
+      std::cout << "i: " << i << ", track_length[i]: " << track_length[i] << std::endl;
+
+      std::cout << "n_recoDauTracks[i]: " << n_recoDauTracks[i] << std::endl;
+      for(int j=0; j<n_recoDauTracks[i]; ++j) {
+	std::cout << "j: " << j << ", dau_track_length: " << dau_track_length[i][j] << std::endl;
+      }
+
+      std::cout << "n_recoDauTracks_RecoAlg[i]: " << n_recoDauTracks_RecoAlg[i] << std::endl;  
+      for(int j=0; j<n_recoDauTracks_RecoAlg[i]; ++j) {
+	std::cout << "j: " << j << ", dau_track_length_RecoAlg: " << dau_track_length_RecoAlg[i][j] << std::endl;
+      }
+    }
+      std::cout << std::endl;
+
 
 
     //CNN dacayID vertex
@@ -1655,6 +1685,26 @@ namespace kaon_reconstruction{
     std::memset( flash_PE_Ar39, 0, sizeof(flash_PE_Ar39) );
   }
 
+  double RunningAnalyzer::CalculateTrackDauDistance(art::Ptr<recob::Track>& track, art::Ptr<recob::Track>& dau_track) {
+    double track_dau_distance_ev = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
+					       (track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
+					       (track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
+    
+    double track_dau_distance_vv = TMath::Sqrt((track->Vertex().x()-dau_track->Vertex().x())*(track->Vertex().x()-dau_track->Vertex().x()) +
+					       (track->Vertex().y()-dau_track->Vertex().y())*(track->Vertex().y()-dau_track->Vertex().y()) +
+					       (track->Vertex().z()-dau_track->Vertex().z())*(track->Vertex().z()-dau_track->Vertex().z()));
+    
+    double track_dau_distance_ve = TMath::Sqrt((track->Vertex().x()-dau_track->End().x())*(track->Vertex().x()-dau_track->End().x()) +
+					       (track->Vertex().y()-dau_track->End().y())*(track->Vertex().y()-dau_track->End().y()) +
+					       (track->Vertex().z()-dau_track->End().z())*(track->Vertex().z()-dau_track->End().z()));
+    
+    double track_dau_distance_ee = TMath::Sqrt((track->End().x()-dau_track->End().x())*(track->End().x()-dau_track->End().x()) +
+					       (track->End().y()-dau_track->End().y())*(track->End().y()-dau_track->End().y()) +
+					       (track->End().z()-dau_track->End().z())*(track->End().z()-dau_track->End().z()));
+   
+    return std::min({track_dau_distance_ev, track_dau_distance_vv, track_dau_distance_ve, track_dau_distance_ee}); 
+    //double track_dau_distance = std::min({track_dau_distance_ev, track_dau_distance_vv, track_dau_distance_ve, track_dau_distance_ee});
+  }
 
 
 }

@@ -196,7 +196,7 @@ namespace kaon_reconstruction{
     void truthMatcher( std::vector<art::Ptr<recob::Hit>> all_hits, std::vector<art::Ptr<recob::Hit>> track_hits, const simb::MCParticle *&MCparticle, double &Efrac, double &Ecomplet);
     double truthLength( const simb::MCParticle *MCparticle );
     bool insideFV(double vertex[4]);
-
+    double CalculateTrackDauDistance(art::Ptr<recob::Track>& track, art::Ptr<recob::Track>& dau_track);
   
 
 
