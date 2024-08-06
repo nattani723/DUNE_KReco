@@ -154,7 +154,6 @@ namespace kaon_reconstruction{
     fEventTree->Branch("vtx_ID", vtx_ID,"vtx_ID[n_vertices]/I");
     fEventTree->Branch("n_reco_tracks", &n_recoTracks);
     fEventTree->Branch("n_reco_dautracks", n_recoDauTracks, "n_recoDauTracks[n_reco_tracks]/I");
-    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/I");
     fEventTree->Branch("n_decayVtx", &n_decayVtx);
     fEventTree->Branch("decayVtx", decayVtx,"decayVtx[n_decayVtx][3]/D");  //vertices found using decayID point Alg
     fEventTree->Branch("vtxID_trk", vtxID_trk,"vtxID_trk[n_reco_tracks][10]/I"); //track-vertex association
@@ -164,13 +163,27 @@ namespace kaon_reconstruction{
     fEventTree->Branch("track_isContained", track_isContained,"track_isContained[n_reco_tracks]/I");
     fEventTree->Branch("track_ID", track_ID,"track_ID[n_reco_tracks]/I");
     fEventTree->Branch("track_length", track_length,"track_length[n_reco_tracks]/D");
-    fEventTree->Branch("dautrack_length", dautrack_length,"dautrack_length[n_reco_tracks][10]/D");
-    fEventTree->Branch("dautrack_distance", dautrack_distance,"dautrack_distance[n_reco_tracks][10]/D");
+
+    fEventTree->Branch("dau_track_length", dau_track_length,"dau_track_length[n_reco_tracks][10]/D");
+    fEventTree->Branch("dau_track_distance", dau_track_distance,"dau_track_distance[n_reco_tracks][10]/D");
+    fEventTree->Branch("dau_track_pdg", dau_track_pdg,"dau_track_pdg[n_reco_tracks][10]/D");
+    fEventTree->Branch("dau_track_mcPDG", dau_track_mcPDG,"dau_track_mcPDG[n_reco_tracks][10]/I");
+    //fEventTree->Branch("dautrack_length", dautrack_length,"dautrack_length[n_reco_tracks][10]/D");
+    //fEventTree->Branch("dautrack_distance", dautrack_distance,"dautrack_distance[n_reco_tracks][10]/D");
+
+    fEventTree->Branch("n_reco_dautracks_RecoAlg", n_recoDauTracks_RecoAlg, "n_recoDauTracks_RecoAlg[n_reco_tracks]/I");
+    fEventTree->Branch("dau_track_length_RecoAlg", dau_track_length_RecoAlg,"dau_track_length_RecoAlg[n_reco_tracks][10]/D");
+    fEventTree->Branch("dau_track_distance_RecoAlg", dau_track_distance_RecoAlg,"dau_track_distance_RecoAlg[n_reco_tracks][10]/D");
+    fEventTree->Branch("dau_track_pdg_RecoAlg", dau_track_pdg_RecoAlg,"dau_track_pdg_RecoAlg[n_reco_tracks][10]/D");
+    fEventTree->Branch("dau_track_mcPDG_RecoAlg", dau_track_mcPDG_RecoAlg,"dau_track_mcPDG_RecoAlg[n_reco_tracks][10]/I");
+    fEventTree->Branch("dau_track_vtx_RecoAlg", dau_track_vtx_RecoAlg,"dau_track_vtx_RecoAlg[n_reco_tracks][10][4]/D");
+    fEventTree->Branch("dau_track_end_RecoAlg", dau_track_end_RecoAlg,"dau_track_end_RecoAlg[n_reco_tracks][10][4]/D");
+
+    fEventTree->Branch("n_reco_rebdautracks", n_recoRebDauTracks, "n_recoRebDauTracks[n_reco_tracks]/I");
     fEventTree->Branch("rebdautrack_distance", rebdautrack_distance,"rebdautrack_distance[n_reco_tracks][10]/D");
     fEventTree->Branch("rebdautracktrue_length", rebdautracktrue_length,"rebdautracktrue_length[n_reco_tracks]/D");
     fEventTree->Branch("rebdautracktruedir_length", rebdautracktruedir_length,"rebdautracktruedir_length[n_reco_tracks]/D");
     fEventTree->Branch("rebdautrack_length", rebdautrack_length,"rebdautrack_length[n_reco_tracks][10]/D");
-    fEventTree->Branch("dautrack_pdg", dautrack_pdg,"dautrack_pdg[n_reco_tracks][10]/D");
     fEventTree->Branch("rebdautrack_pdg", rebdautrack_pdg,"rebdautrack_pdg[n_reco_tracks][10]/D");
 
     fEventTree->Branch("best_peak_x", best_peak_x,"best_peak_x[n_reco_tracks][10]/D");
@@ -205,7 +218,8 @@ namespace kaon_reconstruction{
     fEventTree->Branch("track_Efrac", track_Efrac,"track_Efrac[n_reco_tracks]/D");        //track quality variable (purity)
     fEventTree->Branch("track_mcID", track_mcID,"track_mcID[n_reco_tracks]/I");           //true MC ID for a given track
     fEventTree->Branch("track_mcPDG", track_mcPDG,"track_mcPDG[n_reco_tracks]/I");        //true MC PDG for a given track
-    fEventTree->Branch("dautrack_mcPDG", dautrack_mcPDG,"dautrack_mcPDG[n_reco_tracks][10]/I");        //true MC PDG for a given daughter track
+
+    //fEventTree->Branch("dautrack_mcPDG", dautrack_mcPDG,"dautrack_mcPDG[n_reco_tracks][10]/I");        //true MC PDG for a given daughter track
 
     fEventTree->Branch("Em_ch", &Em_ch);
     fEventTree->Branch("Em_e", &Em_e);
@@ -599,8 +613,12 @@ namespace kaon_reconstruction{
     for(int i=0; i<n_recoTracks; ++i) {
 
       art::Ptr<recob::Track> track = tracklist[i];
-      n_recoRebDauTracks[i] = 0;
+
+      std::vector<art::Ptr<recob::Hit>> hits_from_track = track_hits.at(i);
+
       n_recoDauTracks[i] = 0;
+      n_recoRebDauTracks[i] = 0;
+      n_recoDauTracks_RecoAlg[i] = 0;
 
       //vtx associations
       std::vector<art::Ptr<recob::Vertex>> vtxs = trk_from_vtx.at(i);
@@ -632,12 +650,13 @@ namespace kaon_reconstruction{
       track_vtxDir[i][1] = tmp_vtx_dir[1];
       track_vtxDir[i][2] = tmp_vtx_dir[2];
 
+      TVector3 vtx(track->Vertex().x(),
+		   track->Vertex().y(),
+		   track->Vertex().z());
+
       TVector3 end(track->End().x(),
 		   track->End().y(),
 		   track->End().z());
-
-      cout << "track_vtx: "  << track_vtx[i][0] << " " << track_vtx[i][1] << " " << track_vtx[i][2]  << endl;
-      cout << "track_end: " << track_end[i][0] << " " << track_end[i][1] << " " << track_end[i][2] << endl;
 
       //truth matcher
       
@@ -654,204 +673,262 @@ namespace kaon_reconstruction{
        //cout << "track_mcPDG[i]: " << track_mcPDG[i] << endl;
        //if(track_mcPDG[i]!=321) continue;
 
+       bool is_vtx = false;
+       bool is_end = false;
+
        for(int j=0; j<n_recoTracks; ++j) {
-
-
-	 art::Ptr<recob::Track> dau_track = tracklist[j];
-
+	 
+	 art::Ptr<recob::Track> dau_track = tracklist[j];	 
+	 
 	 if(dau_track->ID() == track->ID()) continue;
+	 
+	 /*
+	 double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
+						 (track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
+						 (track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
+	 */
 
-	double track_dau_distance = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
-						(track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
-						(track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
-
-	if(track_dau_distance<15){
-
-	  dautrack_length[i][n_recoDauTracks[i]] = dau_track->Length();
-	  dautrack_mcPDG[i][n_recoDauTracks[i]] = track_mcPDG[j];
-	  dautrack_distance[i][n_recoDauTracks[i]] = track_dau_distance;
-
-	  const simb::MCParticle *mcparticle_dau;
-	  std::map<int,int> hits_pdg_map_dau;
-	  for(auto const& hit : track_hits.at(j)){
-	    truthHitMatcher(hit, mcparticle_dau);
-	    if(!mcparticle_dau) continue;
-	    //cout << "mcparticle->PdgCode(): " << mcparticle->PdgCode() << endl;
-	    if(hits_pdg_map_dau.find(mcparticle_dau->PdgCode()) == hits_pdg_map_dau.end()) hits_pdg_map_dau[mcparticle_dau->PdgCode()] = 1;
-	    else hits_pdg_map_dau[mcparticle_dau->PdgCode()] += 1;
-	  }
-
-	  vector<pair<int, int>> v;
-	  if(hits_pdg_map_dau.size()){
-	    for (map<int, int>::iterator it = hits_pdg_map_dau.begin(); it != hits_pdg_map_dau.end(); it++)
-	      v.push_back({ it->second, it->first });
-	         
-	    sort(v.rbegin(), v.rend());
-	    dautrack_pdg[i][n_recoDauTracks[i]] = v[0].second;
-	    cout << "dautrack_pdg[i][n_recoDauTracks[i]]: " << v[0].second << endl;
-	  }
-	  n_recoDauTracks[i]++;
-	}
-
-       }       
-
-      /* imported codes*/
-
-      std::vector<art::Ptr<recob::Hit>> hits_from_track = track_hits.at(i);
-      /*
-      cout << "begin unavailable hit list" << endl;
-      for(art::Ptr<recob::Hit>& hit : hits_from_track) {
-	cout << "a" << endl;
-	auto sp = fHitsToSpacePoints.at(hit);
-	cout << "a" << endl;
-
-	const TVector3 hit_position = sp->XYZ();
-	cout << hit_position.X() << " " << hit_position.Y() << " " << hit_position.Z() << endl;
-      }
-      cout << "end unavailable hit list" << endl;
-      */
-
-      ReconstructionOrchestrator orchestrator;
-      ReconstructionOrchestrator orchestrator_truepi;
-      ReconstructionOrchestrator orchestrator_truemu;
-
-      orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-
-      //turn this on if you need to print out histogram  
-      /*
-      TCanvas *c = (TCanvas*)gROOT->FindObject("c");
-      if (c) {
-	delete c;
-      }
-      c = new TCanvas("c", "Canvas", 800, 600);
-      orchestrator.drawHistograms(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, hit_pdg_map, c);
-      */
-
-      std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
-      std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
-
-      cout << "Kaon_BR: " << Kaon_BR << endl;
-      cout << "before loop rebuildTrackList" << endl;
-
-      for(unsigned int j=0; j < rebuildTrackList.size(); j++) {
-	
-	const std::vector<TVector3> peakDirectionVector = orchestrator.getPeakDirectionList();
-
-	//best_peak_x[i][j] = peakDirectionVector.at(j).X();
-	//best_peak_y[i][j] = peakDirectionVector.at(j).Y();
-	//best_peak_z[i][j] = peakDirectionVector.at(j).Z();
-
-	if(trackHitLists[j].empty()) continue;
-
-	TVector3 pos(rebuildTrackList[j].Vertex().X(),rebuildTrackList[j].Vertex().Y(),rebuildTrackList[j].Vertex().Z());
-
-	double track_dau_distance=TMath::Sqrt((end.X()-pos.X())*(end.X()-pos.X()) +
-					      (end.Y()-pos.Y())*(end.Y()-pos.Y()) +
-					      (end.Z()-pos.Z())*(end.Z()-pos.Z()));
-
-	if (track_dau_distance>10) continue;//store distance
-
-	rebdautrack_distance[i][n_recoRebDauTracks[i]] = track_dau_distance;
-
-	best_peak_x[i][n_recoRebDauTracks[i]] = peakDirectionVector.at(j).X();
-	best_peak_y[i][n_recoRebDauTracks[i]] = peakDirectionVector.at(j).Y();
-	best_peak_z[i][n_recoRebDauTracks[i]] = peakDirectionVector.at(j).Z();
-
-	//rebdautrack_length[ntracks][n_recoRebDauTracks[ntracks]] = rebuildTrackList[j].Length();
-	rebdautrack_length[i][n_recoRebDauTracks[i]] = rebuildTrackList[j].Length();
-
-	const simb::MCParticle *mcparticle;
-	std::map<int,int> nhits_pdg_map;
-	std::map<recob::Hit,int> hit_pdg_map;
-
-	for(auto const& hit : trackHitLists[j]){
-
-	  truthHitMatcher(hit, mcparticle);
-	  if(!mcparticle){
-	    cout << "THIS HAS NO MCPARTICLE!!!" << endl;
-	    continue;
-	  }
+	 double track_dau_distance = 999;
+	 bool is_vtx_tmp = false;
+	 bool is_end_tmp = false;
+	 
+	 CalculateTrackDauDistance(track, dau_track, track_dau_distance, is_vtx_tmp, is_end_tmp);
+	 
+	 if(track_dau_distance<5){//15
+	  
+	   if(is_vtx == false && is_vtx_tmp == true) is_vtx = is_vtx_tmp; 
+	   if(is_end == false && is_end_tmp == true) is_end = is_end_tmp;
  
-	  hit_pdg_map[(*hit)] = mcparticle->PdgCode();
-
-	  if(nhits_pdg_map.find(mcparticle->PdgCode()) == nhits_pdg_map.end()) nhits_pdg_map[mcparticle->PdgCode()] = 1;
-	  else nhits_pdg_map[mcparticle->PdgCode()] += 1;
-
-	}
-
-	vector<pair<int, int>> v;
-	if(nhits_pdg_map.size()){
-	  for (map<int, int>::iterator it = nhits_pdg_map.begin(); it != nhits_pdg_map.end(); it++) {
-	    v.push_back({ it->second, it->first });
-	    //cout << it->second << " " << it->first << endl;
-	  }
-	  sort(v.rbegin(), v.rend());
-	  //rebdautrack_pdg[ntracks][n_recoRebDauTracks[ntracks]] = v[0].second;
-	  rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
-	}
-	//n_recoRebDauTracks[ntracks]++;
-	n_recoRebDauTracks[i]++;
-
-      }
-
-      if(Kaon_BR==2){
-
-	orchestrator_truepi.runReconstruction(SpacePointlist_truepi, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-	std::vector<recob::Track> rebuildTrackList_truepi = orchestrator_truepi.getRebuildTrackList(); 
-
-
-	if(!rebuildTrackList_truepi.empty()){
+	   dau_track_length[i][n_recoDauTracks[i]] = dau_track->Length();
+	   dau_track_mcPDG[i][n_recoDauTracks[i]] = track_mcPDG[j];
+	   dau_track_distance[i][n_recoDauTracks[i]] = track_dau_distance;
 	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
-	  //rebdautracktrue_length[ntracks] = rebuildTrackList_truepi[0].Length();
-	  
-	  std::vector<TVector3> peakDirectionVector =  orchestrator_truepi.getPeakDirectionList();
-	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
-	  //best_peak_x_true[ntracks] = peakDirectionVector[0].X(); 
-	  //best_peak_y_true[ntracks] = peakDirectionVector[0].Y(); 
-	  //best_peak_z_true[ntracks] = peakDirectionVector[0].Z(); 
-	  
-	  orchestrator_truepi.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
-	  //rebdautracktruedir_length[ntracks] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
-	  
-	}
-	
-      }
-      
-      if(Kaon_BR==1){
+	   const simb::MCParticle *mcparticle_dau;
+	   std::map<int,int> hits_pdg_map_dau;
+	   for(auto const& hit : track_hits.at(j)){
+	     truthHitMatcher(hit, mcparticle_dau);
+	     if(!mcparticle_dau) continue;
+	     //cout << "mcparticle->PdgCode(): " << mcparticle->PdgCode() << endl;
+	     if(hits_pdg_map_dau.find(mcparticle_dau->PdgCode()) == hits_pdg_map_dau.end()) hits_pdg_map_dau[mcparticle_dau->PdgCode()] = 1;
+	     else hits_pdg_map_dau[mcparticle_dau->PdgCode()] += 1;
+	   }
 
-	orchestrator_truemu.runReconstruction(SpacePointlist_truemu, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
-	std::vector<recob::Track> rebuildTrackList_truemu = orchestrator_truemu.getRebuildTrackList(); 
-	
-	if(!rebuildTrackList_truemu.empty()){
-	  
-	  rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
-	  //rebdautracktrue_length[ntracks] = rebuildTrackList_truemu[0].Length();
-	  
-	  std::vector<TVector3> peakDirectionVector =  orchestrator_truemu.getPeakDirectionList();
-	  
-	  best_peak_x_true[i] = peakDirectionVector[0].X(); 
-	  best_peak_y_true[i] = peakDirectionVector[0].Y(); 
-	  best_peak_z_true[i] = peakDirectionVector[0].Z(); 
-	  //best_peak_x_true[ntracks] = peakDirectionVector[0].X(); 
-	  //best_peak_y_true[ntracks] = peakDirectionVector[0].Y(); 
-	  //best_peak_z_true[ntracks] = peakDirectionVector[0].Z(); 
-	  
-	  orchestrator_truemu.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector);
-	  rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
-	  //rebdautracktruedir_length[ntracks] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
-	  
-	}
+	   vector<pair<int, int>> v;
+	   if(hits_pdg_map_dau.size()){
+	     for (map<int, int>::iterator it = hits_pdg_map_dau.begin(); it != hits_pdg_map_dau.end(); it++)
+	       v.push_back({ it->second, it->first });
+	     
+	     sort(v.rbegin(), v.rend());
+	     dau_track_pdg[i][n_recoDauTracks[i]] = v[0].second;
+	     cout << "dautrack_pdg[i][n_recoDauTracks[i]]: " << v[0].second << endl;
+	   }
 
-      }
-      
-    
-      /* end of imported bits*/
+	   n_recoDauTracks[i]++;
 
+	 }
+
+       } 
+
+       /* imported codes*/
+       
+       std::vector<recob::Track> rebuildTrackList;
+       std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists;
+       std::vector<TVector3> peakDirectionVector;
+       
+       if(is_vtx&&is_end) continue;
+       if(!is_vtx){
+	 
+	 ReconstructionOrchestrator orchestrator_vtx;
+	 orchestrator_vtx.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, "vtx");
+	 std::vector<recob::Track> rebuildTrackList_vtx = orchestrator_vtx.getRebuildTrackList();
+	 std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists_vtx = orchestrator_vtx.getHitLists();
+	 std::vector<TVector3> peakDirectionVector_vtx = orchestrator_vtx.getPeakDirectionList(); 
+	 
+	 rebuildTrackList.insert(rebuildTrackList.end(), rebuildTrackList_vtx.begin(), rebuildTrackList_vtx.end());
+	 trackHitLists.insert(trackHitLists.end(), trackHitLists_vtx.begin(), trackHitLists_vtx.end());
+	 peakDirectionVector.insert(peakDirectionVector.end(), peakDirectionVector_vtx.begin(), peakDirectionVector_vtx.end());
+	 
+       }
+       if(!is_end){
+	 
+	 ReconstructionOrchestrator orchestrator_end;
+	 orchestrator_end.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, "end");
+	 std::vector<recob::Track> rebuildTrackList_end = orchestrator_end.getRebuildTrackList(); 
+	 std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists_end = orchestrator_end.getHitLists();
+	 std::vector<TVector3> peakDirectionVector_end = orchestrator_end.getPeakDirectionList(); 
+	 
+	 rebuildTrackList.insert(rebuildTrackList.end(), rebuildTrackList_end.begin(), rebuildTrackList_end.end());
+	 trackHitLists.insert(trackHitLists.end(), trackHitLists_end.begin(), trackHitLists_end.end());
+	 peakDirectionVector.insert(peakDirectionVector.end(), peakDirectionVector_end.begin(), peakDirectionVector_end.end()); 
+	 
+       }
+       
+       /*
+	 cout << "begin unavailable hit list" << endl;
+	 for(art::Ptr<recob::Hit>& hit : hits_from_track) {
+	 cout << "a" << endl;
+	 auto sp = fHitsToSpacePoints.at(hit);
+	 cout << "a" << endl;
+	 
+	 const TVector3 hit_position = sp->XYZ();
+	 cout << hit_position.X() << " " << hit_position.Y() << " " << hit_position.Z() << endl;
+	 }
+	 cout << "end unavailable hit list" << endl;
+       */
+       
+       //ReconstructionOrchestrator orchestrator;
+       ReconstructionOrchestrator orchestrator_truepi;
+       ReconstructionOrchestrator orchestrator_truemu;
+       
+       //orchestrator.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
+       
+       //turn this on if you need to print out histogram  
+       /*
+	 TCanvas *c = (TCanvas*)gROOT->FindObject("c");
+	 if (c) {
+	 delete c;
+	 }
+	 c = new TCanvas("c", "Canvas", 800, 600);
+	 orchestrator.drawHistograms(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, hit_pdg_map, c);
+       */
+       
+       //std::vector<recob::Track> rebuildTrackList = orchestrator.getRebuildTrackList();
+       //std::vector<std::vector<art::Ptr<recob::Hit>>> trackHitLists = orchestrator.getHitLists();
+       
+       cout << "Kaon_BR: " << Kaon_BR << endl;
+       cout << "before loop rebuildTrackList" << endl;
+       
+       for(unsigned int j=0; j < rebuildTrackList.size(); j++) {
+	 
+	 //art::Ptr<recob::Track> dau_track = rebuildTrackList[j];
+	 
+	 //const std::vector<TVector3> peakDirectionVector = orchestrator.getPeakDirectionList();
+	 
+	 //best_peak_x[i][j] = peakDirectionVector.at(j).X();
+	 //best_peak_y[i][j] = peakDirectionVector.at(j).Y();
+	 //best_peak_z[i][j] = peakDirectionVector.at(j).Z();
+	 
+	 if(trackHitLists[j].empty()) continue;
+	 
+	 TVector3 pos(rebuildTrackList[j].Vertex().X(),rebuildTrackList[j].Vertex().Y(),rebuildTrackList[j].Vertex().Z());
+	 
+	 
+	 double track_end_dau_distance=TMath::Sqrt((end.X()-pos.X())*(end.X()-pos.X()) +
+						   (end.Y()-pos.Y())*(end.Y()-pos.Y()) +
+						   (end.Z()-pos.Z())*(end.Z()-pos.Z()));
+	 
+	 double track_vtx_dau_distance=TMath::Sqrt((vtx.X()-pos.X())*(vtx.X()-pos.X()) +
+						   (vtx.Y()-pos.Y())*(vtx.Y()-pos.Y()) +
+						   (vtx.Z()-pos.Z())*(vtx.Z()-pos.Z()));
+	 
+	 double track_dau_distance = (track_end_dau_distance < track_vtx_dau_distance) ? track_end_dau_distance : track_vtx_dau_distance;
+	 
+	 if (track_dau_distance>5) continue;//store distance
+	 
+	 best_peak_x[i][n_recoRebDauTracks[i]] = peakDirectionVector.at(j).X();
+	 best_peak_y[i][n_recoRebDauTracks[i]] = peakDirectionVector.at(j).Y();
+	 best_peak_z[i][n_recoRebDauTracks[i]] = peakDirectionVector.at(j).Z();
+	 
+	 //rebdautrack_length[ntracks][n_recoRebDauTracks[ntracks]] = rebuildTrackList[j].Length();
+	 rebdautrack_length[i][n_recoRebDauTracks[i]] = rebuildTrackList[j].Length();
+	 rebdautrack_distance[i][n_recoRebDauTracks[i]] = track_dau_distance;
+
+	 dau_track_length_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = rebuildTrackList[j].Length();
+	 dau_track_distance_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = track_dau_distance;
+
+	 //dau_track_vtx_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = {pos.X(), pos.Y(), pos.Z(), -999};
+	 //dau_track_end_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = {rebuildTrackList[j].End().X(), rebuildTrackList[j].End.Y(), rebuildTrackList[j].End.Z(), -999};
+	 
+	 const simb::MCParticle *mcparticle;
+	 std::map<int,int> nhits_pdg_map;
+	 std::map<recob::Hit,int> hit_pdg_map;
+	 
+	 for(auto const& hit : trackHitLists[j]){
+	   
+	   truthHitMatcher(hit, mcparticle);
+	   if(!mcparticle){
+	     cout << "THIS HAS NO MCPARTICLE!!!" << endl;
+	     continue;
+	   }
+	   
+	   hit_pdg_map[(*hit)] = mcparticle->PdgCode();
+	   
+	   if(nhits_pdg_map.find(mcparticle->PdgCode()) == nhits_pdg_map.end()) nhits_pdg_map[mcparticle->PdgCode()] = 1;
+	   else nhits_pdg_map[mcparticle->PdgCode()] += 1;
+	   
+	 }
+	 
+	 vector<pair<int, int>> v;
+	 if(nhits_pdg_map.size()){
+	   for (map<int, int>::iterator it = nhits_pdg_map.begin(); it != nhits_pdg_map.end(); it++) {
+	     v.push_back({ it->second, it->first });
+	     //cout << it->second << " " << it->first << endl;
+	   }
+	   sort(v.rbegin(), v.rend());
+	   //rebdautrack_pdg[ntracks][n_recoRebDauTracks[ntracks]] = v[0].second;
+	   rebdautrack_pdg[i][n_recoRebDauTracks[i]] = v[0].second;
+	   dau_track_pdg_RecoAlg[i][n_recoDauTracks_RecoAlg[i]] = v[0].second;
+	 }
+	 //n_recoRebDauTracks[ntracks]++;
+	 n_recoRebDauTracks[i]++;
+	 n_recoDauTracks_RecoAlg[i]++;
+       }
+       
+       if(Kaon_BR==2){
+	 
+	 orchestrator_truepi.runReconstruction(SpacePointlist_truepi, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
+	 std::vector<recob::Track> rebuildTrackList_truepi = orchestrator_truepi.getRebuildTrackList(); 
+	 
+	 
+	 if(!rebuildTrackList_truepi.empty()){
+	   
+	   rebdautracktrue_length[i] = rebuildTrackList_truepi[0].Length();
+	   //rebdautracktrue_length[ntracks] = rebuildTrackList_truepi[0].Length();
+	   
+	   std::vector<TVector3> peakDirectionVector_truepi =  orchestrator_truepi.getPeakDirectionList();
+	   
+	   orchestrator_truepi.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector_truepi);
+
+	   if(!orchestrator_truepi.getRebuildTrackList().empty()){
+	     best_peak_x_true[i] = peakDirectionVector_truepi[0].X(); 
+	     best_peak_y_true[i] = peakDirectionVector_truepi[0].Y(); 
+	     best_peak_z_true[i] = peakDirectionVector_truepi[0].Z(); 
+	     rebdautracktruedir_length[i] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
+	     //rebdautracktruedir_length[ntracks] = orchestrator_truepi.getRebuildTrackList().at(0).Length();
+	   }
+	   
+	 }
+	 
+       }
+       
+       if(Kaon_BR==1){
+	 
+	 orchestrator_truemu.runReconstruction(SpacePointlist_truemu, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track);
+	 std::vector<recob::Track> rebuildTrackList_truemu = orchestrator_truemu.getRebuildTrackList(); 
+	 
+	 if(!rebuildTrackList_truemu.empty()){
+	   
+	   rebdautracktrue_length[i] = rebuildTrackList_truemu[0].Length();
+	   //rebdautracktrue_length[ntracks] = rebuildTrackList_truemu[0].Length();
+	   
+	   std::vector<TVector3> peakDirectionVector_truemu =  orchestrator_truemu.getPeakDirectionList();
+	   
+	   orchestrator_truemu.runReconstruction(SpacePointlist, fSpacePointsToHits, fHitsToSpacePoints, track, hits_from_track, peakDirectionVector_truemu);
+
+	   if(!orchestrator_truemu.getRebuildTrackList().empty()){
+	     best_peak_x_true[i] = peakDirectionVector_truemu[0].X(); 
+	     best_peak_y_true[i] = peakDirectionVector_truemu[0].Y(); 
+	     best_peak_z_true[i] = peakDirectionVector_truemu[0].Z();
+	     rebdautracktruedir_length[i] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
+	     //rebdautracktruedir_length[ntracks] = orchestrator_truemu.getRebuildTrackList().at(0).Length();
+	   }
+	 }
+	 
+       }
+       
+       
+       /* end of imported bits*/
+       
       // add track points
       n_track_points[i] = track->NPoints();
       for (int ipt=0; ipt < n_track_points[i]; ipt++) {
@@ -987,7 +1064,6 @@ namespace kaon_reconstruction{
 	}
       }
 
-      
 
     } // end of track loop
 
@@ -1319,7 +1395,6 @@ namespace kaon_reconstruction{
     std::memset( decayVtx, 0, sizeof(decayVtx) );
     n_recoTracks = 0;
     std::memset( n_recoDauTracks, 0, sizeof(n_recoDauTracks) );
-    std::memset( n_recoRebDauTracks, 0, sizeof(n_recoRebDauTracks) );
     std::memset( track_isContained, 0, sizeof(track_isContained) );
     std::memset( track_ID, 0, sizeof(track_ID) );
     std::memset( vtxID_trk, 0, sizeof(vtxID_trk) );
@@ -1327,13 +1402,26 @@ namespace kaon_reconstruction{
     std::memset( track_vtx, 0, sizeof(track_vtx) );
     std::memset( track_end, 0, sizeof(track_end) );
     std::memset( track_length, 0, sizeof(track_length) );
-    std::memset( dautrack_length, 0, sizeof(dautrack_length) );
-    std::memset( dautrack_distance, 0, sizeof(dautrack_distance) );
+    std::memset( dau_track_length, 0, sizeof(dau_track_length) );
+    std::memset( dau_track_distance, 0, sizeof(dau_track_distance) );
+    std::memset( dau_track_pdg, 0, sizeof(dau_track_pdg) );
+    //std::memset( dautrack_length, 0, sizeof(dautrack_length) );
+    //std::memset( dautrack_distance, 0, sizeof(dautrack_distance) );
+    //std::memset( dautrack_pdg, 0, sizeof(dautrack_pdg) );
+
+    std::memset( n_recoDauTracks_RecoAlg, 0, sizeof(n_recoDauTracks_RecoAlg) );
+    std::memset( dau_track_length_RecoAlg, 0, sizeof(dau_track_length_RecoAlg) );
+    std::memset( dau_track_distance_RecoAlg, 0, sizeof(dau_track_distance_RecoAlg) );
+    std::memset( dau_track_pdg_RecoAlg, 0, sizeof(dau_track_pdg_RecoAlg) );
+    std::memset( dau_track_mcPDG_RecoAlg, 0, sizeof(dau_track_mcPDG_RecoAlg) );
+    std::memset( dau_track_vtx_RecoAlg, 0, sizeof(dau_track_vtx_RecoAlg) );   
+    std::memset( dau_track_end_RecoAlg, 0, sizeof(dau_track_end_RecoAlg) );   
+
+    std::memset( n_recoRebDauTracks, 0, sizeof(n_recoRebDauTracks) );
     std::memset( rebdautracktrue_length, 0, sizeof(rebdautracktrue_length) );
     std::memset( rebdautracktruedir_length, 0, sizeof(rebdautracktruedir_length) );
     std::memset( rebdautrack_length, 0, sizeof(rebdautrack_length) );
     std::memset( rebdautrack_distance, 0, sizeof(rebdautrack_distance) );
-    std::memset( dautrack_pdg, 0, sizeof(dautrack_pdg) );
     std::memset( rebdautrack_pdg, 0, sizeof(rebdautrack_pdg) );
 
     std::memset( best_peak_x, 0, sizeof(best_peak_x) );
@@ -1354,7 +1442,8 @@ namespace kaon_reconstruction{
     std::memset( track_complet, 0, sizeof(track_complet) );
     std::memset( track_mcID, 0, sizeof(track_mcID) );
     std::memset( track_mcPDG, 0, sizeof(track_mcPDG) );
-    std::memset( dautrack_mcPDG, 0, sizeof(dautrack_mcPDG) );
+    std::memset( dau_track_mcPDG, 0, sizeof(dau_track_mcPDG) );
+    //std::memset( dautrack_mcPDG, 0, sizeof(dautrack_mcPDG) );
     std::memset( n_track_points, 0, sizeof(n_track_points) );
     std::memset( track_point_xyz, 0, sizeof(track_point_xyz) );
     std::memset( n_cal_points, 0, sizeof(n_cal_points) );
@@ -1415,6 +1504,33 @@ namespace kaon_reconstruction{
     std::memset( flash_PE_Ar39, 0, sizeof(flash_PE_Ar39) );
   }
 
+  void HitSplitAlg::CalculateTrackDauDistance(art::Ptr<recob::Track>& track, art::Ptr<recob::Track>& dau_track, double& track_dau_distance, bool& is_vtx, bool& is_end) {
+
+    double track_dau_distance_ev = TMath::Sqrt((track->End().x()-dau_track->Vertex().x())*(track->End().x()-dau_track->Vertex().x()) +
+					       (track->End().y()-dau_track->Vertex().y())*(track->End().y()-dau_track->Vertex().y()) +
+					       (track->End().z()-dau_track->Vertex().z())*(track->End().z()-dau_track->Vertex().z()));
+    
+    double track_dau_distance_vv = TMath::Sqrt((track->Vertex().x()-dau_track->Vertex().x())*(track->Vertex().x()-dau_track->Vertex().x()) +
+					       (track->Vertex().y()-dau_track->Vertex().y())*(track->Vertex().y()-dau_track->Vertex().y()) +
+					       (track->Vertex().z()-dau_track->Vertex().z())*(track->Vertex().z()-dau_track->Vertex().z()));
+    
+    double track_dau_distance_ve = TMath::Sqrt((track->Vertex().x()-dau_track->End().x())*(track->Vertex().x()-dau_track->End().x()) +
+					       (track->Vertex().y()-dau_track->End().y())*(track->Vertex().y()-dau_track->End().y()) +
+					       (track->Vertex().z()-dau_track->End().z())*(track->Vertex().z()-dau_track->End().z()));
+    
+    double track_dau_distance_ee = TMath::Sqrt((track->End().x()-dau_track->End().x())*(track->End().x()-dau_track->End().x()) +
+					       (track->End().y()-dau_track->End().y())*(track->End().y()-dau_track->End().y()) +
+					       (track->End().z()-dau_track->End().z())*(track->End().z()-dau_track->End().z()));
+   
+    track_dau_distance = std::min({track_dau_distance_ev, track_dau_distance_vv, track_dau_distance_ve, track_dau_distance_ee}); 
+    
+    if(track_dau_distance == track_dau_distance_vv || track_dau_distance == track_dau_distance_ve)
+      is_vtx = true;
+
+    if(track_dau_distance == track_dau_distance_ee || track_dau_distance == track_dau_distance_ev)
+      is_end = true;
+
+  }
 
 
 }

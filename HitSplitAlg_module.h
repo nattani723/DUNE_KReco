@@ -196,7 +196,7 @@ namespace kaon_reconstruction{
     void truthMatcher( std::vector<art::Ptr<recob::Hit>> all_hits, std::vector<art::Ptr<recob::Hit>> track_hits, const simb::MCParticle *&MCparticle, double &Efrac, double &Ecomplet);
     double truthLength( const simb::MCParticle *MCparticle );
     bool insideFV(double vertex[4]);
-
+    void CalculateTrackDauDistance(art::Ptr<recob::Track>& track, art::Ptr<recob::Track>& dau_track, double& track_dau_distance, bool& is_vtx, bool& is_end);
   
 
 
@@ -291,7 +291,6 @@ private:
     double decayVtx[MAX_TRACKS][3];
     int    n_recoTracks;
     int    n_recoDauTracks[MAX_TRACKS];
-    int    n_recoRebDauTracks[MAX_TRACKS];
     int    track_isContained[MAX_TRACKS];
     int    track_ID[MAX_TRACKS];
     int    vtxID_trk[MAX_TRACKS][10];
@@ -299,14 +298,25 @@ private:
     double track_vtx[MAX_TRACKS][4];
     double track_end[MAX_TRACKS][4];
     double track_length[MAX_TRACKS];
-    double dautrack_length[MAX_TRACKS][10];
-    double dautrack_distance[MAX_TRACKS][10];
+    double dau_track_length[MAX_TRACKS][10];
+    double dau_track_distance[MAX_TRACKS][10];
+    double dau_track_pdg[MAX_TRACKS][10];
+
+    int    n_recoRebDauTracks[MAX_TRACKS];
     double rebdautrack_distance[MAX_TRACKS][10];
     double rebdautracktrue_length[MAX_TRACKS];
     double rebdautracktruedir_length[MAX_TRACKS];
     double rebdautrack_length[MAX_TRACKS][10];
-    double dautrack_pdg[MAX_TRACKS][10];
     double rebdautrack_pdg[MAX_TRACKS][10];
+
+    int    n_recoDauTracks_RecoAlg[MAX_TRACKS];
+    double dau_track_length_RecoAlg[MAX_TRACKS][10];
+    double dau_track_distance_RecoAlg[MAX_TRACKS][10];
+    double dau_track_pdg_RecoAlg[MAX_TRACKS][10];
+    int    dau_track_mcPDG_RecoAlg[MAX_TRACKS][10];
+    double dau_track_vtx_RecoAlg[MAX_TRACKS][10][4];
+    double dau_track_end_RecoAlg[MAX_TRACKS][10][4];
+
     double best_peak_x[MAX_TRACKS][10];
     double best_peak_y[MAX_TRACKS][10];
     double best_peak_z[MAX_TRACKS][10];
@@ -324,7 +334,7 @@ private:
     double track_complet[MAX_TRACKS];
     int    track_mcID[MAX_TRACKS];
     int    track_mcPDG[MAX_TRACKS];
-    int    dautrack_mcPDG[MAX_TRACKS][10];
+    int    dau_track_mcPDG[MAX_TRACKS][10];
     int    n_track_points[MAX_TRACKS];
     double track_point_xyz[MAX_TRACKS][MAX_CALO_PTS][3];
     int    n_cal_points[MAX_TRACKS];
